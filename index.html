@@ -531,11 +531,19 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   }
   // What counts as "changed" — compared canonically so key order never causes a pointless write.
   const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].b]), (s.exams || []).map((x) => x.t), s.resetAt || 0, s.prefs]);
+  // ⚠ GitHub answers 404, not 403, when a token lacks a permission — found 2026-09-14 when the first
+  //   real sync said only "GitHub answered 404". Fine-grained tokens cannot use gists at all (GitHub
+  //   docs), and GitHub's default "Generate new token" makes a fine-grained one.
+  const NO_GIST_SCOPE = "this token can't use gists. Make a CLASSIC token (Developer settings → Tokens (classic)) with only the gist box ticked, then Replace token.";
   async function gh(path, opts) {
     const headers = { Accept: "application/vnd.github+json", Authorization: "Bearer " + ls.get(LS_TOKEN) };
     if (opts && opts.body) headers["Content-Type"] = "application/json";
     const r = await fetch("https://api.github.com" + path, { ...(opts || {}), headers });
-    if (r.status === 401) throw new Error("GitHub refused the token — check it has the gist permission and hasn't expired.");
+    // Classic tokens list their scopes here (GitHub exposes the header to web pages); fine-grained ones send none.
+    const sc = r.headers.get("X-OAuth-Scopes");
+    if (sc !== null) gist.scopes = sc;
+    if (r.status === 401) throw new Error("GitHub refused the token — check it hasn't expired or been deleted.");
+    if (r.status === 404 && opts && opts.method === "POST") throw new Error(NO_GIST_SCOPE);
     if (r.status === 403 || r.status === 429) throw new Error("GitHub is limiting requests — it will retry later.");
     if (!r.ok) throw new Error("GitHub answered " + r.status + " — it will retry later.");
     return r.status === 204 ? null : r.json();
@@ -594,6 +602,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     gist.busy = true; gist.error = ""; paintGistStatus();
     try {
       const g = await findGist();
+      // A classic token without "gist" can still LIST gists, so catch it before trying to create one.
+      if (gist.scopes != null && !/(^|,)\s*gist\s*(,|$)/.test(gist.scopes)) throw new Error(NO_GIST_SCOPE);
       const remote = g ? await readRemote(g) : null;
       // ⚠ Merge only AFTER the network reads: an answer given while they were in flight is already
       // in `state` by now, so nothing is lost. Nothing below awaits until the write.
@@ -680,6 +690,11 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     if (a === "save") {
       const v = ($("#gist-token").value || "").trim();
       if (!v) { $("#gist-status").textContent = "Paste a token first."; return; }
+      if (/^github_pat_/.test(v)) {
+        $("#gist-status").textContent = "That's a fine-grained token (it starts github_pat_), and GitHub doesn't let those use gists. Make a CLASSIC token instead — Developer settings → Tokens (classic) — with only the gist box ticked. Classic tokens start ghp_.";
+        return;
+      }
+      gist.scopes = null;
       ls.set(LS_TOKEN, v); ls.set(LS_GIST, null); gist.error = "";
       renderProgress(); gistSync();
     } else if (a === "sync") gistSync();
