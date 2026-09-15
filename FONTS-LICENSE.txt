@@ -1,0 +1,8 @@
+Fonts embedded in the offline Element Drill app (study/build_site.py). Latin subsets as served by
+Google Fonts on 2026-09-14; fonts.tsv records family, weight, file and unicode-range.
+
+  Big Shoulders Display  — Copyright The Big Shoulders Project Authors (Patric King)
+  IBM Plex Sans, IBM Plex Mono — Copyright IBM Corp., with Reserved Font Name "Plex"
+
+All are licensed under the SIL Open Font License, Version 1.1: https://openfontlicense.org
+They are redistributed unmodified.
