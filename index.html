@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Element 2 &amp; 3 Drill</title>
-<meta name="description" content="Memorise the Technician (2026–2030) and General (2023–2027) question pools: spaced drill, practice exams, look-alike pairs, a cram sheet and read-aloud.">
+<meta name="description" content="Memorise the Technician (2026–2030) and General (2023–2027) question pools: a daily-streak game, spaced drill, practice exams, look-alike pairs, a cram sheet and read-aloud.">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#E9EEEA">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111916">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -251,6 +251,54 @@ b.key { font-weight: 600; text-decoration: underline; text-decoration-color: var
 .gnum { font: 400 .68rem/1 var(--mono); color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 480px) { .grow { grid-template-columns: 2.6rem minmax(0, 1fr); } .gcell { grid-column: 2; } }
 
+/* ---- game: Band Chase ---- */
+.game-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; }
+.rank-name { font: 800 1.6rem/1 var(--display); letter-spacing: .02em; }
+.rank-meta { font: 400 .78rem/1.3 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.streak { font: 800 1.1rem/1 var(--display); letter-spacing: .05em; text-transform: uppercase; color: var(--accent-ink); }
+.streak.cold { color: var(--ink-3); }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr)); gap: 10px; }
+.mode {
+  appearance: none; text-align: left; display: grid; gap: 5px; align-content: start; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px;
+  box-shadow: var(--shadow); color: inherit; font-family: var(--sans);
+}
+.mode:hover { border-color: var(--accent); }
+.mode.daily { border-color: var(--accent); background: var(--accent-soft); }
+.mode.daily.done { background: var(--good-soft); border-color: var(--good); }
+.mode b { font: 800 1.35rem/1 var(--display); letter-spacing: .02em; }
+.mode .tag { font: 600 .62rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
+.mode p { margin: 0; font-size: .82rem; line-height: 1.42; color: var(--ink-2); }
+.mode .pb { font: 400 .72rem/1.3 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.hud { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font: 400 .8rem/1 var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.hud .sc { font: 600 1.6rem/1 var(--mono); color: var(--ink); }
+.hud .mult { font: 800 1.15rem/1 var(--display); letter-spacing: .04em; color: var(--accent-ink); }
+.hud .gain { font: 600 .9rem/1 var(--mono); color: var(--good); }
+.hud .gain.no { color: var(--bad); }
+.hud .lives { letter-spacing: .22em; color: var(--bad); }
+.timer { flex: 1 1 100%; height: 5px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+.timer span { display: block; height: 100%; background: var(--accent); }
+.timer.low span { background: var(--bad); }
+.cueq { margin: 0 0 14px; font: 800 clamp(1.35rem, 5.5vw, 2rem)/1.22 var(--display); letter-spacing: .01em; max-width: 26ch; text-wrap: balance; }
+.cue-note { margin: -8px 0 14px; font: 400 .74rem/1.3 var(--mono); color: var(--ink-3); }
+.ansbig { margin: 0 0 6px; font-size: 1.14rem; line-height: 1.5; max-width: 60ch; font-weight: 600; color: var(--good); }
+.band-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr)); gap: 5px; }
+.bcell {
+  appearance: none; cursor: pointer; padding: 7px 3px; border-radius: 5px; text-align: center;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink-3); font: 600 .74rem/1.25 var(--mono);
+}
+.bcell:hover { border-color: var(--ink-3); }
+.bcell.heard { color: var(--ink-2); }
+.bcell.worked { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.bcell.qsl { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.bcell small { display: block; font-size: .58rem; font-weight: 400; opacity: .75; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 400 .7rem/1.4 var(--mono); color: var(--ink-3); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; border: 1px solid var(--line); background: var(--panel); }
+.legend i.w { background: var(--accent-soft); border-color: var(--accent); }
+.legend i.q { background: var(--good-soft); border-color: var(--good); }
+.run-end { display: grid; gap: 4px; }
+.newrec { font: 800 1.1rem/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); }
+
 /* ---- footer ---- */
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; padding-block: 28px 0; font-size: .74rem; line-height: 1.5; color: var(--ink-3); }
 .foot p { margin: 0; max-width: 60ch; }
@@ -282,6 +330,7 @@ label.btn { display: inline-flex; align-items: center; }
   </div>
   <nav class="wrap tabs" role="tablist" aria-label="Modes">
     <button type="button" class="tab" role="tab" data-view="drill" aria-selected="true">Drill</button>
+    <button type="button" class="tab" role="tab" data-view="game" aria-selected="false">Game</button>
     <button type="button" class="tab" role="tab" data-view="exam" aria-selected="false">Exam</button>
     <button type="button" class="tab" role="tab" data-view="pairs" aria-selected="false">Look-alikes</button>
     <button type="button" class="tab" role="tab" data-view="cram" aria-selected="false">Cram</button>
@@ -299,6 +348,10 @@ label.btn { display: inline-flex; align-items: center; }
       <span class="meta" id="queue"></span>
     </div>
     <article class="card" id="drill-card"></article>
+  </section>
+
+  <section class="view" id="v-game" hidden>
+    <div id="game-body"></div>
   </section>
 
   <section class="view" id="v-exam" hidden>
@@ -400,7 +453,26 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   }
 
   // ---------- state ----------
-  const blank = (pid = P.pool) => ({ v: 1, pool: pid, updated: 0, cards: {}, exams: [], prefs: { rate: 1, sayId: false, order: "weak", auto: true } });
+  // A day key in LOCAL time: the streak has to match the day the operator thinks it is, not UTC.
+  const dayKey = (t) => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  // Game totals are kept PER DAY, never as a running sum. Two devices can then merge by taking the
+  // larger value for each day, which is idempotent — a plain total would inflate every time it
+  // synced both ways. `best` carries the day it was set so a reset can drop it.
+  const blankGame = () => ({ xpd: {}, runs: {}, daily: {}, best: {} });
+  function normGame(g) {
+    const b = blankGame();
+    if (!g || typeof g !== "object") return b;
+    const num = (m) => { const o = {}; if (m && typeof m === "object") for (const k of Object.keys(m)) { const v = +m[k]; if (Number.isFinite(v)) o[k] = v; } return o; };
+    const best = {};
+    if (g.best && typeof g.best === "object") {
+      for (const k of Object.keys(g.best)) {
+        const e = g.best[k];
+        if (e && typeof e === "object" && Number.isFinite(+e.s)) best[k] = { s: +e.s, d: typeof e.d === "string" ? e.d : "" };
+      }
+    }
+    return { ...b, xpd: num(g.xpd), runs: num(g.runs), daily: num(g.daily), best };
+  }
+  const blank = (pid = P.pool) => ({ v: 1, pool: pid, updated: 0, cards: {}, exams: [], game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true } });
   function normalize(s, pid = P.pool) {
     const b = blank(pid);
     if (!s || typeof s !== "object" || s.pool !== pid) return b;
@@ -408,6 +480,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       ...b, ...s,
       cards: s.cards && typeof s.cards === "object" ? s.cards : {},
       exams: Array.isArray(s.exams) ? s.exams.slice(-20) : [],
+      game: normGame(s.game),
       prefs: { ...b.prefs, ...(s.prefs || {}) },
     };
   }
@@ -527,10 +600,33 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     const ex = new Map();
     for (const e of [...(a.exams || []), ...(b.exams || [])]) if (e && e.t >= resetAt) ex.set(e.t, e);
     const newer = (a.updated || 0) >= (b.updated || 0) ? a : b;
-    return { ...newer, cards, exams: [...ex.values()].sort((x, y) => x.t - y.t).slice(-20), resetAt, updated: Math.max(a.updated || 0, b.updated || 0) };
+    return { ...newer, cards, exams: [...ex.values()].sort((x, y) => x.t - y.t).slice(-20), game: mergeGame(a.game, b.game, resetAt), resetAt, updated: Math.max(a.updated || 0, b.updated || 0) };
+  }
+  // ⚠ Game state must merge COMMUTATIVELY, or two devices undo each other: every map takes the larger
+  // value per key, which gives the same answer whichever way round it runs and however many times.
+  // Day-keyed maps drop anything older than a reset; `best` drops by the day it was set.
+  function mergeGame(a, b, resetAt) {
+    const A = normGame(a), B = normGame(b), cut = resetAt ? dayKey(resetAt) : "";
+    const pick = (x, y) => {
+      const o = {};
+      for (const src of [x, y]) for (const k of Object.keys(src)) { if (k < cut) continue; o[k] = Math.max(o[k] || 0, src[k]); }
+      return o;
+    };
+    const best = {};
+    for (const src of [A.best, B.best]) for (const k of Object.keys(src)) {
+      const e = src[k];
+      if (cut && (e.d || "") < cut) continue;
+      if (!best[k] || e.s > best[k].s) best[k] = { s: e.s, d: e.d };
+    }
+    return { xpd: pick(A.xpd, B.xpd), runs: pick(A.runs, B.runs), daily: pick(A.daily, B.daily), best };
   }
   // What counts as "changed" — compared canonically so key order never causes a pointless write.
-  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].b]), (s.exams || []).map((x) => x.t), s.resetAt || 0, s.prefs]);
+  const canonGame = (g) => {
+    const G = normGame(g);
+    return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
+      .concat([["best", Object.keys(G.best).sort().map((k) => [k, G.best[k].s, G.best[k].d])]]);
+  };
+  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].b]), (s.exams || []).map((x) => x.t), s.resetAt || 0, s.prefs, canonGame(s.game)]);
   // ⚠ GitHub answers 404, not 403, when a token lacks a permission — found 2026-09-14 when the first
   //   real sync said only "GitHub answered 404". Fine-grained tokens cannot use gists at all (GitHub
   //   docs), and GitHub's default "Generate new token" makes a fine-grained one.
@@ -761,11 +857,15 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   let view = "drill";
   function show(v) {
     if (view === "listen" && v !== "listen") listenPause();
+    // Leaving the game abandons the round: a timer that kept running behind another tab would come
+    // back already lost, and a half-answered round is not a score worth keeping.
+    if (view === "game" && v !== "game") { stopRun(); run = null; }
     if (v !== "drill") cancelAuto();
     view = v;
     document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.view === v)));
     document.querySelectorAll(".view").forEach((s) => { s.hidden = s.id !== "v-" + v; });
     if (v === "drill") { if (!drill.item) nextDrill(); else renderDrill(); }
+    if (v === "game") renderGame();
     if (v === "exam") renderExam();
     if (v === "pairs") { preparePairs(); renderPairs(); }
     if (v === "cram") renderCram();
@@ -777,6 +877,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     if (view === "drill") renderDrill();
     if (view === "progress") renderProgress();
     if (view === "cram") renderCram();
+    if (view === "game" && !run) renderGame();       // mid-round the DOM is the round; leave it alone
   }
 
   // ---------- drill ----------
@@ -1136,6 +1237,251 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }
   });
 
+  // ---------- game: Band Chase ----------
+  // The drill is efficient and the exam is a test, but neither gives a reason to open this on day 40.
+  // Three loops run at once: a round that lasts a minute, a daily net that keeps a streak, and a
+  // 35-group band map that fills in over weeks.
+  // ⚠⚠ Two rules keep it from becoming a game INSTEAD of studying, and they matter more than the points:
+  //   1. every answer goes through record(), so a round is a drill session — the pass estimate moves;
+  //   2. a question is worth more the worse it is known, so grinding easy ones pays almost nothing,
+  //      and the map's thresholds are the same KNOW levels the pass estimate uses. The thing the game
+  //      asks you to chase and the thing the exam measures cannot drift apart.
+  const RANKS = [[0, "Across the room"], [400, "Across town"], [1200, "Groundwave"], [2600, "NVIS"],
+    [5000, "Skip"], [9000, "DX"], [15000, "Worked all continents"], [24000, "Moonbounce"]];
+  const MODES = {
+    daily: { name: "Daily net", tag: "12 questions · once a day", n: 12,
+      blurb: "One question from each of twelve groups, fixed for the day and the same on every device you open. Check in and the streak grows." },
+    pileup: { name: "Pileup", tag: "90 seconds", time: 90000, penalty: 5000,
+      blurb: "As many as you can before the clock runs out. Each right answer builds the multiplier; a wrong one breaks it and costs five seconds." },
+    cue: { name: "Cue", tag: "20 questions", n: 20, cue: true,
+      blurb: "Only the few words that pick this question out of the whole pool — never the full text. The thinnest the association gets." },
+    reverse: { name: "Reverse", tag: "20 answers", n: 20, reverse: true,
+      blurb: "The answer is on the card and you pick the question it belongs to. Backwards from the drill, which catches answers known only by their shape." },
+    zero: { name: "Zero Beat", tag: "one miss ends it", lives: 1,
+      blurb: "No clock and no second chance. How far can you get without a single mistake?" },
+  };
+  const xpTotal = (g) => Object.values(g.xpd).reduce((s, v) => s + v, 0);
+  const runsTotal = (g) => Object.values(g.runs).reduce((s, v) => s + v, 0);
+  function rankOf(xp) {
+    let i = 0;
+    while (i + 1 < RANKS.length && xp >= RANKS[i + 1][0]) i++;
+    return { name: RANKS[i][1], next: i + 1 < RANKS.length ? RANKS[i + 1] : null, i };
+  }
+  // The streak is DERIVED from which days were played, never stored as a counter — a stored counter
+  // is the thing two devices would fight over.
+  function streakOf(g) {
+    const set = new Set(Object.keys(g.xpd));
+    let t = Date.now(), n = 0;
+    if (!set.has(dayKey(t))) t -= 864e5;          // nothing today yet, but yesterday keeps it alive
+    while (set.has(dayKey(t))) { n++; t -= 864e5; }
+    return n;
+  }
+  const valueOf = (id) => 10 + Math.round(20 * (1 - pOf(id)));    // 10 for solid, 25 for never seen
+  const multOf = (combo) => Math.min(5, 1 + Math.floor(combo / 4));
+  // A seeded shuffle so the daily net is the same set on every device — it must not depend on
+  // anything local, so it is drawn from the pool alone.
+  const hash32 = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const mulberry32 = (a) => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  function dailyQueue(key) {
+    const rnd = mulberry32(hash32(P.pool + "|" + key)), gs = GROUPS.slice();
+    for (let i = gs.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [gs[i], gs[j]] = [gs[j], gs[i]]; }
+    return gs.slice(0, MODES.daily.n).map((g) => { const a = byGroup.get(g.id); return a[Math.floor(rnd() * a.length)]; });
+  }
+  // Weakest first, but sampled from a wider band so two rounds are never the same list.
+  function weakPick(n) {
+    const pool = ORDER.slice().sort((a, b) => pOf(a.id) - pOf(b.id));
+    return shuffle(pool.slice(0, Math.min(pool.length, Math.max(n, n * 3)))).slice(0, n);
+  }
+  // Reverse: three decoy questions, preferring the same group — a decoy from another subelement is
+  // no test at all, and one whose answer happens to read the same would have no right answer.
+  function stemsFor(it) {
+    const same = shuffle(byGroup.get(it.g).filter((x) => x.id !== it.id && x.answers[x.c] !== it.answers[it.c]));
+    const need = 3 - same.length;
+    const extra = need > 0 ? shuffle(ORDER.filter((x) => x.id !== it.id && x.answers[x.c] !== it.answers[it.c])).slice(0, need) : [];
+    return shuffle(same.slice(0, 3).concat(extra));
+  }
+
+  let run = null, runTimer = null;
+  function stopRun() { if (runTimer) clearInterval(runTimer); runTimer = null; }
+  function armQuestion() {
+    run.answered = false; run.choice = null; run.gain = 0;
+    run.order = shuffle([0, 1, 2, 3]);
+    const it = run.queue[run.i];
+    if (run.cfg.reverse) run.stems = shuffle([it].concat(stemsFor(it)));
+  }
+  function startRun(mode) {
+    const cfg = MODES[mode];
+    if (!cfg) return;
+    stopRun();
+    const queue = mode === "daily" ? dailyQueue(dayKey(Date.now())) : weakPick(cfg.n || 40);
+    run = { mode, cfg, queue, i: 0, score: 0, combo: 0, bestCombo: 0, right: 0, wrong: 0,
+      lives: cfg.lives || 0, missed: [], done: false, gain: 0,
+      endsAt: cfg.time ? Date.now() + cfg.time : 0, startedP: passProb() };
+    armQuestion();
+    if (cfg.time) runTimer = setInterval(() => { if (run && !run.done && Date.now() >= run.endsAt) endRun(); else paintTimer(); }, 200);
+    renderGame();
+  }
+  function paintTimer() {
+    if (!run || !run.endsAt) return;
+    const left = Math.max(0, run.endsAt - Date.now()), frac = left / run.cfg.time;
+    const bar = $("#run-timer"), num = $("#run-left");
+    if (bar) { bar.firstElementChild.style.width = (frac * 100).toFixed(1) + "%"; bar.classList.toggle("low", left < 15000); }
+    if (num) num.textContent = Math.ceil(left / 1000) + " s";
+  }
+  function answerGame(pos) {
+    if (!run || run.done || run.answered) return;
+    const it = run.queue[run.i];
+    const ok = run.cfg.reverse ? run.stems[pos].id === it.id : run.order[pos] === it.c;
+    record(it.id, ok);                                    // ⚠ this is what makes the game a drill
+    run.answered = true; run.choice = pos;
+    if (ok) {
+      run.right++; run.combo++; run.bestCombo = Math.max(run.bestCombo, run.combo);
+      run.gain = valueOf(it.id) * multOf(run.combo);
+      run.score += run.gain;
+    } else {
+      run.wrong++; run.combo = 0; run.gain = 0; run.missed.push(it);
+      if (run.cfg.penalty && run.endsAt) run.endsAt -= run.cfg.penalty;
+      if (run.cfg.lives) run.lives--;
+    }
+    renderGame();
+    // A wrong answer holds longer: reading the right answer is the moment that does the memorising.
+    setTimeout(() => {
+      if (!run || run.done || !run.answered) return;
+      if (run.cfg.lives && run.lives <= 0) return endRun();
+      if (run.endsAt && Date.now() >= run.endsAt) return endRun();
+      run.i++;
+      if (run.i >= run.queue.length) {
+        if (run.cfg.n) return endRun();
+        run.queue = run.queue.concat(weakPick(40));       // the timed and survival rounds never run out
+      }
+      armQuestion();
+      renderGame();
+    }, ok ? 750 : 2400);
+  }
+  function endRun() {
+    stopRun();
+    if (!run || run.done) return;
+    run.done = true;
+    if (run.right || run.wrong) {
+      const g = state.game, k = dayKey(Date.now());
+      g.xpd[k] = (g.xpd[k] || 0) + run.score;
+      g.runs[k] = (g.runs[k] || 0) + 1;
+      if (run.mode === "daily") g.daily[k] = Math.max(g.daily[k] || 0, run.score);
+      const prev = g.best[run.mode];
+      run.record = run.score > 0 && (!prev || run.score > prev.s);
+      if (run.record) g.best[run.mode] = { s: run.score, d: k };
+      touch();
+    }
+    renderGame();
+  }
+  const bandClass = (gp) => gp >= 0.91 ? "qsl" : gp >= 0.72 ? "worked" : gp >= 0.5 ? "heard" : "";
+  function gameHomeHTML() {
+    const g = state.game, xp = xpTotal(g), r = rankOf(xp), st = streakOf(g), today = dayKey(Date.now());
+    const doneToday = g.daily[today] !== undefined;
+    let h = '<div class="view"><div class="game-top"><span class="rank-name">' + esc(r.name) + '</span>' +
+      '<span class="streak' + (st ? "" : " cold") + '">' + (st ? st + " day" + (st === 1 ? "" : "s") + " running" : "No streak yet") + "</span>" +
+      '<span class="rank-meta">' + xp.toLocaleString() + " points · " + runsTotal(g) + " rounds" +
+      (r.next ? " · " + (r.next[0] - xp).toLocaleString() + " to " + r.next[1] : " · top rank") + "</span></div>";
+    h += '<p class="lede">Every answer here counts in your drill, and a question you barely know is worth more than twice one you have solid — so the fastest way to score is to work on what you are worst at.</p>';
+    h += '<div class="modes">';
+    h += '<button type="button" class="mode daily' + (doneToday ? " done" : "") + '" data-game="daily"><span class="tag">' + esc(MODES.daily.tag) + "</span><b>" + esc(MODES.daily.name) + "</b><p>" + esc(MODES.daily.blurb) + "</p>" +
+      '<span class="pb">' + (doneToday ? "Worked today — " + g.daily[today].toLocaleString() + " points. Play again for practice." : st ? "Not worked today — the streak is at " + st + "." : "Work it today to start a streak.") + "</span></button>";
+    for (const m of ["pileup", "zero", "cue", "reverse"]) {
+      const b = g.best[m];
+      h += '<button type="button" class="mode" data-game="' + m + '"><span class="tag">' + esc(MODES[m].tag) + "</span><b>" + esc(MODES[m].name) + "</b><p>" + esc(MODES[m].blurb) + "</p>" +
+        '<span class="pb">' + (b ? "Best " + b.s.toLocaleString() : "No score yet") + "</span></button>";
+    }
+    h += "</div>";
+    const worked = GROUPS.filter((x) => groupP(x.id) >= 0.72).length, qsl = GROUPS.filter((x) => groupP(x.id) >= 0.91).length;
+    h += '<div><p class="eyebrow">Worked all groups — ' + worked + " of " + GROUPS.length + " worked, " + qsl + " confirmed</p>" +
+      '<p class="lede">One cell per exam group. A group is <b>worked</b> once you know it well enough to expect its exam question right, and <b>confirmed</b> when it is solid. Filling this in is the same thing as being ready — tap any cell to drill it.</p>';
+    h += '<div class="band-map">' + GROUPS.map((x) => {
+      const gp = groupP(x.id);
+      return '<button type="button" class="bcell ' + bandClass(gp) + '" data-group="' + x.id + '" title="' + esc(x.id + " · " + (GTITLE[x.id] || "")) + '">' + x.id + "<small>" + Math.round(gp * 100) + "</small></button>";
+    }).join("") + "</div>";
+    h += '<p class="legend"><span><i></i>not yet</span><span><i class="w"></i>worked</span><span><i class="q"></i>confirmed</span></p></div>';
+    return h + "</div>";
+  }
+  function runCardHTML() {
+    const it = run.queue[run.i];
+    let h = '<div class="card-head"><span class="qid">' + (run.answered || !run.cfg.cue ? it.id : "· · ·") + '</span>' +
+      '<span class="gname">' + esc(run.answered || !run.cfg.cue ? (GTITLE[it.g] || "") : "") + "</span>" + pips(it.id) + "</div>";
+    if (run.cfg.reverse) {
+      h += '<p class="eyebrow">Which question does this answer?</p><p class="ansbig">' + esc(it.answers[it.c]) + '</p><ol class="choices">';
+      run.stems.forEach((s, pos) => {
+        let cls = "choice";
+        if (run.answered) { if (s.id === it.id) cls += " good"; else if (pos === run.choice) cls += " bad"; }
+        h += '<li><button type="button" class="' + cls + '" data-pos="' + pos + '"' + (run.answered ? " disabled" : "") + '><span class="k">' + (pos + 1) + '</span><span class="t">' + esc(s.text) + "</span></button></li>";
+      });
+      return h + "</ol>";
+    }
+    if (run.cfg.cue && !run.answered) {
+      // Some questions have no unique short cue; those fall back to the full text rather than lying.
+      const cue = it.cue ? it.text.slice(it.cue[0], it.cue[1]) : null;
+      h += '<p class="cueq">' + esc(cue || it.text) + "</p>" + (cue ? '<p class="cue-note">the words that pick this question out of the pool</p>' : "");
+    } else if (it.fig && FIGS[it.fig]) {
+      h += '<figure class="fig"><img src="' + FIGS[it.fig] + '" alt="Figure ' + esc(figName(it.fig)) + '"></figure><p class="qtext">' + esc(it.text) + "</p>";
+    } else {
+      h += '<p class="qtext">' + esc(it.text) + "</p>";
+    }
+    h += '<ol class="choices">';
+    run.order.forEach((orig, pos) => {
+      let cls = "choice";
+      if (run.answered) { if (orig === it.c) cls += " good"; else if (pos === run.choice) cls += " bad"; }
+      const txt = run.answered && orig === it.c && it.keys && it.keys.length ? markSpans(it.answers[orig], it.keys, '<b class="key">', "</b>") : esc(it.answers[orig]);
+      h += '<li><button type="button" class="' + cls + '" data-pos="' + pos + '"' + (run.answered ? " disabled" : "") + '><span class="k">' + (pos + 1) + '</span><span class="t">' + txt + "</span></button></li>";
+    });
+    return h + "</ol>";
+  }
+  function runHTML() {
+    const cfg = run.cfg;
+    let h = '<div class="view"><div class="hud"><span class="sc">' + run.score.toLocaleString() + "</span>" +
+      (run.combo >= 4 ? '<span class="mult">×' + multOf(run.combo) + "</span>" : "") +
+      (run.answered ? '<span class="gain' + (run.gain ? "" : " no") + '">' + (run.gain ? "+" + run.gain : "no score") + "</span>" : "") +
+      '<span>' + run.right + " right · " + run.wrong + " wrong</span>" +
+      (cfg.lives ? '<span class="lives">' + "♦".repeat(Math.max(0, run.lives)) + "</span>" : "") +
+      (cfg.n ? "<span>" + Math.min(run.i + 1, cfg.n) + " / " + cfg.n + "</span>" : "") +
+      (cfg.time ? '<span id="run-left">' + Math.ceil(Math.max(0, run.endsAt - Date.now()) / 1000) + ' s</span><span class="timer" id="run-timer"><span style="width:' + (Math.max(0, run.endsAt - Date.now()) / cfg.time * 100).toFixed(1) + '%"></span></span>' : "") +
+      "</div>";
+    h += '<article class="card" id="run-card">' + runCardHTML() + "</article>";
+    h += '<div class="exam-nav"><span class="meta" style="margin-left:0">Keys 1–4 answer</span><span class="spacer"></span><button type="button" class="btn ghost" data-game="quit">End round</button></div>';
+    return h + "</div>";
+  }
+  function endHTML() {
+    const g = state.game, gained = run.score, st = streakOf(g);
+    const dp = passProb() - run.startedP;
+    let h = '<div class="view"><div class="result-head"><span class="score">' + run.score.toLocaleString() + '<small> points</small></span>' +
+      (run.record ? '<span class="newrec">New best</span>' : "") +
+      '<span class="lede">' + esc(MODES[run.mode].name) + " · " + run.right + " right, " + run.wrong + " wrong" + (run.bestCombo >= 4 ? " · best run of " + run.bestCombo + " in a row" : "") + "</span></div>";
+    h += '<div class="run-end"><p class="rank-meta">+' + gained.toLocaleString() + " points · " + rankOf(xpTotal(g)).name +
+      (run.mode === "daily" ? " · streak " + st + " day" + (st === 1 ? "" : "s") : "") + "</p>";
+    h += '<p class="rank-meta">Chance of passing: ' + fmtPct(passProb()) + (Math.abs(dp) >= 0.001 ? " (" + (dp >= 0 ? "+" : "−") + fmtPct(Math.abs(dp)).replace("<", "") + " this round)" : "") + "</p></div>";
+    if (run.missed.length) {
+      h += '<div><p class="eyebrow">Missed — these are back in your drill</p>' + run.missed.map((it) =>
+        '<div class="miss"><p class="q"><span class="qid">' + it.id + "</span> " + esc(it.text) + '</p><p class="right">Answer: ' +
+        (it.keys && it.keys.length ? markSpans(it.answers[it.c], it.keys, '<b class="key">', "</b>") : esc(it.answers[it.c])) + "</p></div>").join("") + "</div>";
+    } else if (run.right) {
+      h += '<p class="lede">Nothing missed.</p>';
+    }
+    h += '<div class="exam-nav"><button type="button" class="btn" data-game="' + run.mode + '">Play again</button><button type="button" class="btn ghost" data-game="home">Back to the game</button></div>';
+    return h + "</div>";
+  }
+  function renderGame() {
+    $("#game-body").innerHTML = !run ? gameHomeHTML() : run.done ? endHTML() : runHTML();
+  }
+  $("#game-body").addEventListener("click", (e) => {
+    const ch = e.target.closest(".choice");
+    if (ch && !ch.disabled) { answerGame(+ch.dataset.pos); return; }
+    const gcell = e.target.closest("[data-group]");
+    if (gcell) { $("#scope").value = gcell.dataset.group; drill = { item: null }; show("drill"); return; }
+    const b = e.target.closest("[data-game]");
+    if (!b) return;
+    const a = b.dataset.game;
+    if (a === "home") { stopRun(); run = null; renderGame(); }
+    else if (a === "quit") endRun();
+    else startRun(a);
+  });
+
   // ---------- pool chrome and switching ----------
   function buildPoolButtons() {
     $("#pools").innerHTML = DATA.pools.map((p) =>
@@ -1192,6 +1538,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         if (document.activeElement && document.activeElement.id === "drill-next") return;
         nextDrill(); e.preventDefault();
       }
+    } else if (view === "game" && run && !run.done) {
+      if (!run.answered && /^[1-4]$/.test(e.key)) { answerGame(+e.key - 1); e.preventDefault(); }
     } else if (view === "exam" && exam && !exam.done) {
       if (/^[1-4]$/.test(e.key)) { selectExam(+e.key - 1); e.preventDefault(); }
       else if (e.key === "ArrowRight") examGo(1);
