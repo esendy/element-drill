@@ -1,5 +1,5 @@
 // sw.js — keeps Element Drill on the device so it opens with no signal. Written by build_site.py.
-const CACHE = "element-drill-73b8d630f8bd";
+const CACHE = "element-drill-626a2120d6cd";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

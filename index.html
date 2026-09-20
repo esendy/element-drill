@@ -146,6 +146,7 @@ input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px;
 .pips i.on { background: var(--accent); border-color: var(--accent); }
 .fig { margin: 0 0 12px; }
 .fig img { display: block; width: 100%; max-width: 480px; height: auto; background: #fff; border-radius: 4px; filter: var(--fig-filter); }
+.figcap { margin-top: 5px; font: 400 .72rem/1.35 var(--mono); color: var(--ink-3); }
 .qtext { margin: 0 0 14px; font-size: 1.12rem; line-height: 1.5; max-width: 64ch; text-wrap: pretty; }
 .choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .choice {
@@ -438,7 +439,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // ⚠ The Technician key is the one v1 used, so progress saved before General existed carries over.
   const lsKey = (id) => (id === "technician-2026-2030" ? "element2-drill.v1" : "element-drill." + id);
 
-  let P, Q, byGroup, ORDER, GROUPS, GTITLE, PROJECT, STMT, state;
+  let P, Q, byGroup, ORDER, GROUPS, GTITLE, PROJECT, STMT, FIGUSES, state;
   function indexPool(p) {
     Q = new Map(); byGroup = new Map(); ORDER = [];
     for (const [id, text, answers, c, fig, cue, keys] of p.q) {
@@ -455,6 +456,11 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       const q = ORDER[qi];
       return q ? { key: qi + "." + ai, text: q.answers[ai], isTrue: !!t, q, qid: q.id, g: q.g } : null;
     }).filter(Boolean);
+    // How many questions share each figure. Several questions ask about DIFFERENT numbered
+    // components in the SAME schematic (T6C02-05 all use T-1), and a weakness-ordered drill serves
+    // them back to back — which reads as "the diagram is stuck" unless the page says otherwise.
+    FIGUSES = {};
+    for (const it of ORDER) if (it.fig) FIGUSES[it.fig] = (FIGUSES[it.fig] || 0) + 1;
     GROUPS = p.groups;
     GTITLE = Object.fromEntries(GROUPS.map((g) => [g.id, g.title]));
     PROJECT = new Set(p.project);
@@ -866,6 +872,16 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     return h + "</span>";
   }
   const figName = (f) => f.replace(".png", "").toUpperCase();
+  // The caption names the figure and says how many questions share it. Without this, five
+  // consecutive questions on one schematic look like a rendering bug rather than the pool's design.
+  function figHTML(it) {
+    if (!it.fig || !FIGS[it.fig]) return "";
+    const n = FIGUSES[it.fig] || 1, nm = figName(it.fig);
+    return '<figure class="fig"><img src="' + FIGS[it.fig] + '" alt="Figure ' + esc(nm) +
+      ' from the question pool"><figcaption class="figcap">Figure ' + esc(nm) +
+      (n > 1 ? " · shared by " + n + " questions, each about a different part of it" : "") +
+      "</figcaption></figure>";
+  }
   function cardHTML(it, order, o) {
     o = o || {};
     let h = '<div class="card-head"><span class="qid">' + it.id + '</span><span class="gname">' + esc(GTITLE[it.g] || "") + "</span>";
@@ -873,7 +889,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     if (PROJECT.has(it.g)) h += '<span class="chip proj" title="This topic comes back when the QMX goes on the air">Mini-JS8</span>';
     if (o.pips !== false) h += pips(it.id);
     h += "</div>";
-    if (it.fig && FIGS[it.fig]) h += '<figure class="fig"><img src="' + FIGS[it.fig] + '" alt="Figure ' + esc(figName(it.fig)) + ' from the question pool"></figure>';
+    h += figHTML(it);
     let q;
     if (o.diffAgainst) q = diffHTML(it.text, o.diffAgainst);
     else if (o.reveal && it.cue) q = markSpans(it.text, [it.cue], '<mark class="cue" title="Cue — the words that pick out this question">', "</mark>");
@@ -1234,7 +1250,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     if (!it) { card.innerHTML = '<p class="empty">Nothing to read in this order yet — questions you miss will appear here.</p>'; renderListenCtl(); return; }
     const showAns = listen.stage === "a" || !listen.playing;
     let h = '<div class="card-head"><span class="qid">' + it.id + '</span><span class="gname">' + esc(GTITLE[it.g] || "") + "</span>" + pips(it.id) + "</div>";
-    if (it.fig && FIGS[it.fig]) h += '<figure class="fig"><img src="' + FIGS[it.fig] + '" alt="Figure ' + esc(figName(it.fig)) + '"></figure>';
+    h += figHTML(it);   // Listen serves weakest-first too, so the shared-schematic run happens here as well
     h += '<p class="qtext">' + esc(it.text) + "</p>";
     h += showAns ? '<div class="ans-box">' + esc(it.answers[it.c]) + "</div>" : '<div class="ans-box wait">Answer coming…</div>';
     card.innerHTML = h;
