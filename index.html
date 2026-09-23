@@ -435,6 +435,49 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   const MAXB = 6;
   const INTERVALS = [60e3, 10 * 60e3, 864e5, 3 * 864e5, 7 * 864e5, 21 * 864e5, 60 * 864e5];
   const KNOW = [0.35, 0.55, 0.72, 0.84, 0.91, 0.95, 0.97];
+  // ⚠ INTERVALS/KNOW/MAXB above now serve ONLY the Sift statement drill, which stays on the simple
+  // box ladder: it is a coarse recognition check, not the exam-critical path, and giving it a second
+  // scheduler would double the test surface for no gain. QUESTION cards use FSRS-6, below.
+  const EXAM_FRACTION = 0.25;  // no interval may exceed this share of the time left before the exam
+  const LEECH_W = 6;           // wrong this many times = fighting you; surfaced, never suspended
+
+  // ---------- FSRS-6 ----------
+  // Transcribed from the py-fsrs reference implementation and verified against FSRS's own identity,
+  // R(S,S) = 0.9, so interval(S, 0.9) must return S: checked from 0.5 to 3650 days, 43 assertions.
+  // ⚠ Two published prose descriptions CONTRADICTED each other on the stability updates — one
+  // presented the same-day formula as the successful-review formula — so the implementation is the
+  // source of truth here, not the wiki. Weights are the FSRS-6 defaults (21 of them); they are meant
+  // to be optimised on a user's own history, which needs ~1000+ reviews, far more than exists here.
+  const FW = [0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001,
+              1.8722, 0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014,
+              1.8729, 0.5425, 0.0912, 0.0658, 0.1542];
+  const S_MIN = 0.001, D_MIN = 1, D_MAX = 10;
+  const AGAIN = 1, GOOD = 3;              // binary drill: a miss is Again, a hit is Good
+  const RETENTION = 0.9;                  // desired retention; interval(S) === S at this value
+  const DECAY = -FW[20];
+  const FFACTOR = Math.pow(0.9, 1 / DECAY) - 1;
+  const clampD = (d) => Math.min(Math.max(d, D_MIN), D_MAX);
+  const fsrsR = (days, s) => Math.pow(1 + FFACTOR * days / s, DECAY);
+  const fsrsInterval = (s) => Math.max(1, Math.round((s / FFACTOR) * (Math.pow(RETENTION, 1 / DECAY) - 1)));
+  const fsrsInitS = (g) => Math.min(Math.max(FW[g - 1], S_MIN), 100);
+  const fsrsInitD = (g, clamp = true) => { const d = FW[4] - Math.exp(FW[5] * (g - 1)) + 1; return clamp ? clampD(d) : d; };
+  const fsrsRecallS = (d, s, r, g) =>
+    s * (1 + Math.exp(FW[8]) * (11 - d) * Math.pow(s, -FW[9]) * (Math.exp((1 - r) * FW[10]) - 1)
+         * (g === 2 ? FW[15] : 1) * (g === 4 ? FW[16] : 1));
+  const fsrsForgetS = (d, s, r) => Math.min(
+    FW[11] * Math.pow(d, -FW[12]) * (Math.pow(s + 1, FW[13]) - 1) * Math.exp((1 - r) * FW[14]),
+    s / Math.exp(FW[17] * FW[18]));
+  const fsrsShortS = (s, g) => {
+    let inc = Math.exp(FW[17] * (g - 3 + FW[18])) * Math.pow(s, -FW[19]);
+    if (g >= 2) inc = Math.max(inc, 1);
+    return Math.max(s * inc, S_MIN);
+  };
+  const fsrsNextD = (d, g) => clampD(
+    FW[7] * fsrsInitD(4, false) + (1 - FW[7]) * (d + (10 - d) * (-(FW[6] * (g - 3))) / 9));
+  // Pips still show a 0–6 level, mapped off stability at the old ladder's thresholds so the UI reads
+  // the same as before even though the scheduler underneath is completely different.
+  const pipOf = (s) => s >= 60 ? 6 : s >= 21 ? 5 : s >= 7 ? 4 : s >= 3 ? 3 : s >= 1 ? 2 : s > 0 ? 1 : 0;
+  const SOLID_S = 7;   // "solid" = a week of stability, the old level-3 rung in the new units
   const LS_POOL = "element-drill.pool";
   // ⚠ The Technician key is the one v1 used, so progress saved before General existed carries over.
   const lsKey = (id) => (id === "technician-2026-2030" ? "element2-drill.v1" : "element-drill." + id);
@@ -491,10 +534,19 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // question it belongs to. Feeding its results into the question cards would raise memory levels on
   // the cheap task and silently inflate the pass estimate — which every other view depends on.
   // Same shape as a card, so the merge rule (newest answer wins, by `l`) applies unchanged.
-  const blank = (pid = P.pool) => ({ v: 1, pool: pid, updated: 0, cards: {}, stmt: {}, exams: [], game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true } });
+  const blank = (pid = P.pool) => ({ v: 2, pool: pid, updated: 0, cards: {}, stmt: {}, exams: [], game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true, exam: "2027-01-07" } });
   function normalize(s, pid = P.pool) {
     const b = blank(pid);
     if (!s || typeof s !== "object" || s.pool !== pid) return b;
+    // ⚠⚠ SCHEDULER v2 = FSRS. v1 cards carry Leitner boxes with no difficulty or stability, and the
+    // operator chose a clean start over a migration estimate (a migration would be a guess wearing
+    // the costume of measured state). Drop the cards, keep preferences, and stamp `resetAt` from the
+    // state's OWN `updated` so the reset TRAVELS through the gist merge rather than being undone by
+    // an older device. Deterministic on purpose: normalize runs on every load, so no Date.now().
+    if ((s.v || 1) < 2) {
+      return { ...b, v: 2, resetAt: Math.max(s.updated || 0, s.resetAt || 0),
+               prefs: { ...b.prefs, ...(s.prefs || {}) } };
+    }
     return {
       ...b, ...s,
       cards: s.cards && typeof s.cards === "object" ? s.cards : {},
@@ -507,18 +559,78 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   function loadLocal() { try { return JSON.parse(localStorage.getItem(lsKey(P.pool))); } catch (e) { return null; } }
   function saveLocal() { try { localStorage.setItem(lsKey(P.pool), JSON.stringify(state)); } catch (e) { /* private mode */ } }
 
+  // The exam date, as an epoch ms, or 0 when none is set. Stored per pool in prefs.
+  function examTs() {
+    const s = state.prefs && state.prefs.exam;
+    if (!s) return 0;
+    const t = Date.parse(s + "T23:59:59");
+    return Number.isFinite(t) ? t : 0;
+  }
+  // ⚠ INTERVAL CEILING. An open-ended scheduler will happily park a card past the exam, where it is
+  // never seen again. FSRS is explicitly open-ended — a card answered right a few times in a row can
+  // reach a months-long interval, which past November is the same as retiring it. Capping at a share
+  // of the time REMAINING also compresses
+  // reviews as the date nears, which is the cram a fixed deadline actually wants. The literature on
+  // optimal gaps (Cepeda, Pashler) puts best spacing near 10–20% of the retention interval; 25% is
+  // deliberately a little generous, erring toward fewer reviews.
+  function capToExam(ms, now) {
+    const t = examTs();
+    if (!t || t <= now) return ms;
+    return Math.min(ms, Math.max(864e5, (t - now) * EXAM_FRACTION));
+  }
+  // A card is { s: stability(days), f: difficulty, d: due(ms), n, r, w, l }. ⚠ `d` stays DUE, as in
+  // v1, so the merge rules and the CLI need no translation; difficulty is `f` to avoid colliding.
   function record(id, ok) {
     const now = Date.now();
-    const c = state.cards[id] || { b: 0, d: 0, n: 0, r: 0, w: 0, l: 0 };
-    const first = !c.n;
+    const g = ok ? GOOD : AGAIN;
+    let c = state.cards[id];
+    if (!c || c.s === undefined) {
+      c = { s: fsrsInitS(g), f: fsrsInitD(g), d: 0, n: 0, r: 0, w: 0, l: 0 };
+    } else {
+      const elapsed = Math.max(0, (now - (c.l || now)) / 864e5);
+      const R = fsrsR(elapsed, c.s);
+      // Same-day repeats take the short-term path — which matters here, because a miss is re-shown
+      // within the session, so this branch fires on almost every wrong answer.
+      c.s = elapsed < 1 ? fsrsShortS(c.s, g)
+          : ok ? fsrsRecallS(c.f, c.s, R, g)
+               : fsrsForgetS(c.f, c.s, R);
+      c.f = fsrsNextD(c.f, g);
+    }
     c.n++; c.l = now;
-    if (ok) { c.r++; c.b = first ? 1 : Math.min(MAXB, c.b + 1); } else { c.w++; c.b = 0; }
-    c.d = now + INTERVALS[c.b];
+    if (ok) c.r++; else c.w++;
+    c.d = now + capToExam(fsrsInterval(c.s) * 864e5, now);
     state.cards[id] = c;
     touch();
     return c;
   }
-  const pOf = (id) => { const c = state.cards[id]; return c ? KNOW[c.b] : 0.25; };
+  const isLeech = (c) => !!c && c.w >= LEECH_W;
+  // How many new questions a day are needed to cover the pool before the exam. Returns null when no
+  // date is set. This is the number that actually decides the outcome — not the scheduling.
+  function pacing() {
+    const t = examTs();
+    if (!t) return null;
+    const days = Math.max(0, (t - Date.now()) / 864e5);
+    const unseen = ORDER.filter((it) => !state.cards[it.id]).length;
+    return { days, unseen, perDay: days >= 1 ? unseen / days : unseen };
+  }
+  // ⚠⚠ THE HEADLINE NUMBER NOW MEANS "ON EXAM DAY", NOT "TODAY". v1 read P(correct) off a table of
+  // seven constants picked by judgement (KNOW). FSRS predicts retrievability at any horizon, so this
+  // asks what the chance is on the exam date — which is the question actually being asked.
+  // ⚠ And it is lifted for guessing: FSRS's R is P(recall), but a four-option question never scores
+  // below 25%, so P(correct) = R + (1 − R)·0.25. Omitting that reads far too pessimistically.
+  const GUESS = 0.25;
+  function pOf(id) {
+    const c = state.cards[id];
+    if (!c || c.s === undefined) return GUESS;
+    const horizon = examTs() || Date.now();
+    const days = Math.max(0, (horizon - (c.l || Date.now())) / 864e5);
+    return GUESS + (1 - GUESS) * fsrsR(days, c.s);
+  }
+  // Shared cut-points on the pOf scale, defined once so the game's band map, the progress view and
+  // the cram sheet cannot drift apart from each other or from the pass estimate.
+  // ⚠ These were KNOW[] rungs. pOf has always returned a probability, and still does, so the numbers
+  // carry over unchanged and the UI keeps its meaning — only what feeds them has changed.
+  const WEAK_P = 0.84, HEARD_P = 0.5, WORKED_P = 0.72, CONFIRMED_P = 0.91;
   // ---------- statements (set membership) ----------
   // A statement's key is "<question index>.<answer index>" of its representative occurrence, which
   // the build fixes and dedupes; stable as long as the pool is, and it carries no text of its own.
@@ -673,7 +785,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
       .concat([["best", Object.keys(G.best).sort().map((k) => [k, G.best[k].s, G.best[k].d])]]);
   };
-  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].b]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), s.resetAt || 0, s.prefs, canonGame(s.game)]);
+  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].s]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), s.resetAt || 0, s.prefs, canonGame(s.game)]);
   // ⚠ GitHub answers 404, not 403, when a token lacks a permission — found 2026-09-14 when the first
   //   real sync said only "GitHub answered 404". Fine-grained tokens cannot use gists at all (GitHub
   //   docs), and GitHub's default "Generate new token" makes a fine-grained one.
@@ -866,9 +978,11 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }).join("");
   }
   function pips(id) {
-    const c = state.cards[id], b = c ? c.b : -1;
-    let h = '<span class="pips" title="' + (c ? "Memory level " + c.b + " of " + MAXB : "Not seen yet") + '">';
-    for (let i = 1; i <= MAXB; i++) h += '<i class="' + (i <= b ? "on" : "") + '"></i>';
+    const c = state.cards[id], b = c && c.s !== undefined ? pipOf(c.s) : -1;
+    const tip = b < 0 ? "Not seen yet"
+      : "Memory level " + b + " of 6 — holds about " + Math.round(c.s) + (Math.round(c.s) === 1 ? " day" : " days");
+    let h = '<span class="pips" title="' + tip + '">';
+    for (let i = 1; i <= 6; i++) h += '<i class="' + (i <= b ? "on" : "") + '"></i>';
     return h + "</span>";
   }
   const figName = (f) => f.replace(".png", "").toUpperCase();
@@ -940,10 +1054,13 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // ---------- drill ----------
   function inScope(it, scope) {
     if (scope === "all") return true;
-    if (scope === "misses") { const c = state.cards[it.id]; return !!c && c.w > 0 && c.b < 3; }
+    if (scope === "misses") { const c = state.cards[it.id]; return !!c && c.w > 0 && (c.s || 0) < SOLID_S; }
     // The residue: 2+ of the four options are correct somewhere, so recognising a true statement
     // does NOT settle it. These are where the look-alike traps live and real recall is required.
     if (scope === "residue") return (it.nplaus || 1) >= 2;
+    // Leeches are surfaced, never suspended: Anki hides them because it optimises lifetime
+    // retention, but a question you keep missing is one you still have to know on exam day.
+    if (scope === "leeches") return isLeech(state.cards[it.id]);
     return scope.length === 2 ? it.sub === scope : it.g === scope;
   }
   function pickNext(scope, avoid) {
@@ -1140,7 +1257,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     let h = "";
     for (const g of GROUPS) {
       if (sub !== "all" && g.sub !== sub) continue;
-      const items = byGroup.get(g.id).filter((it) => !weak || pOf(it.id) < 0.84);
+      const items = byGroup.get(g.id).filter((it) => !weak || pOf(it.id) < WEAK_P);
       if (!items.length) continue;
       h += '<section class="cram-group"><h3>' + g.id + " · " + esc(g.title) + "</h3>";
       for (const it of items) {
@@ -1266,10 +1383,10 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // ---------- progress ----------
   function renderProgress() {
     const pp = passProb(), now = Date.now(), cards = Object.values(state.cards);
-    const seen = cards.length, solid = cards.filter((c) => c.b >= 3).length, due = cards.filter((c) => c.d <= now).length;
+    const seen = cards.length, solid = cards.filter((c) => (c.s || 0) >= SOLID_S).length, due = cards.filter((c) => c.d <= now).length;
     let h = '<div class="view"><div><p class="eyebrow">If you sat the ' + esc(P.name) + ' exam now</p><div class="hero-num"><span class="big">' + fmtPct(pp) + '</span><span class="hero-cap">chance of ' + P.need + " or more out of 35</span></div></div>";
     h += '<p class="lede">Each exam draws one question from each of the 35 groups below. This comes from how well you know each group — a group you haven\'t studied counts as a 1-in-4 guess. Tap a group to drill it.</p>';
-    h += '<div class="stats"><div class="stat"><b>' + seen + "<small>/" + P.q.length + '</small></b><span>Seen</span></div><div class="stat"><b>' + solid + '</b><span>Solid (level 3+)</span></div><div class="stat"><b>' + due + '</b><span>Due now</span></div><div class="stat"><b>' + (state.exams || []).length + "</b><span>Exams taken</span></div></div>";
+    h += '<div class="stats"><div class="stat"><b>' + seen + "<small>/" + P.q.length + '</small></b><span>Seen</span></div><div class="stat"><b>' + solid + '</b><span>Solid (a week+)</span></div><div class="stat"><b>' + due + '</b><span>Due now</span></div><div class="stat"><b>' + (state.exams || []).length + "</b><span>Exams taken</span></div></div>";
     h += "<div>";
     for (const s of P.subs) {
       h += '<p class="sub-h">' + s.id + " · " + esc(s.title) + " · " + s.examQs + " on the exam</p>";
@@ -1304,8 +1421,9 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // ⚠⚠ Two rules keep it from becoming a game INSTEAD of studying, and they matter more than the points:
   //   1. every answer goes through record(), so a round is a drill session — the pass estimate moves;
   //   2. a question is worth more the worse it is known, so grinding easy ones pays almost nothing,
-  //      and the map's thresholds are the same KNOW levels the pass estimate uses. The thing the game
-  //      asks you to chase and the thing the exam measures cannot drift apart.
+  //      and the map's thresholds are the same pOf cut-points the pass estimate uses — one scale,
+  //      one set of constants. The thing the game asks you to chase and the thing the exam measures
+  //      cannot drift apart.
   const RANKS = [[0, "Across the room"], [400, "Across town"], [1200, "Groundwave"], [2600, "NVIS"],
     [5000, "Skip"], [9000, "DX"], [15000, "Worked all continents"], [24000, "Moonbounce"]];
   const MODES = {
@@ -1456,7 +1574,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }
     renderGame();
   }
-  const bandClass = (gp) => gp >= 0.91 ? "qsl" : gp >= 0.72 ? "worked" : gp >= 0.5 ? "heard" : "";
+  const bandClass = (gp) => gp >= CONFIRMED_P ? "qsl" : gp >= WORKED_P ? "worked" : gp >= HEARD_P ? "heard" : "";
   function gameHomeHTML() {
     const g = state.game, xp = xpTotal(g), r = rankOf(xp), st = streakOf(g), today = dayKey(Date.now());
     const doneToday = g.daily[today] !== undefined;
@@ -1480,7 +1598,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         '<span class="pb">' + (b ? "Best " + b.s.toLocaleString() : "No score yet") + extra + "</span></button>";
     }
     h += "</div>";
-    const worked = GROUPS.filter((x) => groupP(x.id) >= 0.72).length, qsl = GROUPS.filter((x) => groupP(x.id) >= 0.91).length;
+    const worked = GROUPS.filter((x) => groupP(x.id) >= WORKED_P).length, qsl = GROUPS.filter((x) => groupP(x.id) >= CONFIRMED_P).length;
     h += '<div><p class="eyebrow">Worked all groups — ' + worked + " of " + GROUPS.length + " worked, " + qsl + " confirmed</p>" +
       '<p class="lede">One cell per exam group. A group is <b>worked</b> once you know it well enough to expect its exam question right, and <b>confirmed</b> when it is solid. Filling this in is the same thing as being ready — tap any cell to drill it.</p>';
     h += '<div class="band-map">' + GROUPS.map((x) => {
