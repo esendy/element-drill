@@ -297,6 +297,15 @@ b.key { font-weight: 600; text-decoration: underline; text-decoration-color: var
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; border: 1px solid var(--line); background: var(--panel); }
 .legend i.w { background: var(--accent-soft); border-color: var(--accent); }
 .legend i.q { background: var(--good-soft); border-color: var(--good); }
+/* Exam review grid reuses .band-map/.bcell; `ans` marks a question that has an answer. */
+.bcell.ans { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+/* On-screen calculator. Real sessions permit one, and several questions are arithmetic. */
+.calc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px;
+        padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+.calc input { flex: 1 1 12rem; min-width: 0; background: var(--ground); color: var(--ink);
+        border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: 400 .95rem/1.2 var(--mono); }
+.calc-out { font: 600 1.05rem/1.2 var(--mono); color: var(--accent-ink); font-variant-numeric: tabular-nums; min-width: 4rem; }
+.calc-note { flex: 1 1 100%; font: 400 .7rem/1.35 var(--mono); color: var(--ink-3); }
 .run-end { display: grid; gap: 4px; }
 .newrec { font: 800 1.1rem/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); }
 
@@ -1157,10 +1166,73 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   });
 
   // ---------- exam ----------
+  // ⚠ These four additions mirror how a real session actually behaves — ExamTools in a browser,
+  // which is what ARRL VEC, GLAARG and others now use (printed booklets are discontinued):
+  // answer by clicking OR typing A-D, the outstanding count on screen, a review pass before
+  // grading, and a calculator. ⛔ Deliberately NOT copied: a real session shows your score but
+  // not WHICH questions you missed. That rule exists for exam integrity, not for learning, and
+  // copying it would break the most useful thing here — misses going straight back into FSRS.
   let exam = null;
+
+  // ⚠⚠ NO eval(). A calculator on a page the operator opens on a phone must not be able to run
+  // arbitrary input, so this parses a restricted grammar and returns NaN on anything else:
+  //   expr = term (('+'|'-') term)*   term = pow (('*'|'/') pow)*
+  //   pow  = unary ('^' unary)?       unary = ('-'|'+')? primary
+  //   primary = number | '(' expr ')'
+  function calcEval(src) {
+    const s = String(src).replace(/[,\s]/g, "").replace(/[xX×]/g, "*").replace(/÷/g, "/");
+    let i = 0;
+    const peek = () => s[i];
+    function number() {
+      const start = i;
+      while (i < s.length && /[0-9.]/.test(s[i])) i++;
+      if (i === start) return NaN;
+      const t = s.slice(start, i);
+      return (t.match(/\./g) || []).length > 1 ? NaN : parseFloat(t);   // "1.2.3" is a typo
+    }
+    function primary() {
+      if (peek() === "(") { i++; const v = expr(); if (peek() !== ")") return NaN; i++; return v; }
+      return number();
+    }
+    function unary() {
+      if (peek() === "-") { i++; return -unary(); }
+      if (peek() === "+") { i++; return unary(); }
+      return primary();
+    }
+    function pow() {
+      const a = unary();
+      if (peek() === "^") { i++; return Math.pow(a, unary()); }
+      return a;
+    }
+    function term() {
+      let a = pow();
+      while (peek() === "*" || peek() === "/") { const op = s[i++], b = pow(); a = op === "*" ? a * b : a / b; }
+      return a;
+    }
+    function expr() {
+      let a = term();
+      while (peek() === "+" || peek() === "-") { const op = s[i++], b = term(); a = op === "+" ? a + b : a - b; }
+      return a;
+    }
+    const v = expr();
+    // ⚠ Trailing junk must FAIL rather than be ignored: "12 / 0.5 kHz" silently returning 24 would
+    // be worse than returning nothing, because the reader would trust it.
+    return (i === s.length && Number.isFinite(v)) ? v : NaN;
+  }
+  // 1e-6 rounding kills float dust (0.30000000000000004) without pretending to more precision.
+  const calcFmt = (v) => Number.isNaN(v) ? "" : String(Math.round(v * 1e6) / 1e6);
+  function calcHTML() {
+    if (!exam || !exam.calc) return "";
+    const out = calcFmt(calcEval(exam.calcExpr || ""));
+    return '<div class="calc"><label class="sr-only" for="calc-in">Calculator</label>' +
+      '<input id="calc-in" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 12 / 0.5" value="' +
+      esc(exam.calcExpr || "") + '"><span class="calc-out" id="calc-out">' + (out === "" ? "" : "= " + out) + "</span>" +
+      '<span class="calc-note">+ − × ÷ ^ and brackets. Typing here never changes your answer.</span></div>';
+  }
   function startExam() {
     const items = GROUPS.map((g) => { const a = byGroup.get(g.id); return a[Math.floor(Math.random() * a.length)]; });
-    exam = { items, orders: items.map(() => shuffle([0, 1, 2, 3])), answers: items.map(() => null), pos: 0, done: false };
+    exam = { items, orders: items.map(() => shuffle([0, 1, 2, 3])), answers: items.map(() => null), pos: 0, done: false,
+             review: false, calc: false, calcExpr: "" };
     renderExam();
   }
   function gradeExam() {
@@ -1200,11 +1272,39 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       el.innerHTML = h;
       return;
     }
+    // ⚠ Which questions are OUTSTANDING, not how many are done. With ten minutes left, the
+    // actionable number is the one you still owe — and the old flow only mentioned it inside a
+    // confirm() at the moment of grading, which is far too late to do anything about.
+    const unanswered = exam.answers.reduce((acc, a, k) => a === null ? acc.concat(k) : acc, []);
+
+    if (exam.review) {
+      let h = '<div class="view"><div><h2 class="vh">Before you grade</h2><p class="lede">' +
+        (unanswered.length
+          ? unanswered.length + " question" + (unanswered.length === 1 ? "" : "s") +
+            " still unanswered — unanswered counts as wrong. Tap a number to go back to it."
+          : "All " + exam.items.length + " answered. Tap a number to look at one again.") + "</p></div>";
+      h += '<div class="band-map">' + exam.items.map((_, k) => {
+        const a = exam.answers[k];
+        return '<button type="button" class="bcell' + (a === null ? "" : " ans") + '" data-jump="' + k + '">' +
+          (k + 1) + "<small>" + (a === null ? "·" : "ABCD"[exam.orders[k].indexOf(a)]) + "</small></button>";
+      }).join("") + "</div>";
+      h += '<p class="legend"><span><i></i>unanswered</span><span><i class="w"></i>answered</span></p>';
+      h += '<div class="exam-nav"><button type="button" class="btn ghost" data-ex="back">Keep working</button>' +
+        '<span class="spacer"></span><button type="button" class="btn" data-ex="grade">Grade exam</button></div></div>';
+      el.innerHTML = h;
+      return;
+    }
+
     const i = exam.pos, it = exam.items[i];
-    const answered = exam.answers.filter((a) => a !== null).length;
-    el.innerHTML = '<div class="view"><div class="exam-top"><span>' + (i + 1) + " / " + exam.items.length + '</span><span class="prog"><span style="width:' + (answered / exam.items.length * 100) + '%"></span></span><span>' + answered + ' answered</span></div><article class="card" id="exam-card">' +
-      cardHTML(it, exam.orders[i], { chosen: exam.answers[i], pips: false }) + '</article><div class="exam-nav"><button type="button" class="btn ghost" data-ex="prev"' + (i === 0 ? " disabled" : "") + '>Previous</button><span class="spacer"></span>' +
-      (i < exam.items.length - 1 ? '<button type="button" class="btn ghost" data-ex="next">Next</button>' : "") + '<button type="button" class="btn" data-ex="grade">Grade exam</button></div></div>';
+    el.innerHTML = '<div class="view"><div class="exam-top"><span>' + (i + 1) + " / " + exam.items.length +
+      '</span><span class="prog"><span style="width:' + ((exam.items.length - unanswered.length) / exam.items.length * 100) + '%"></span></span><span>' +
+      (unanswered.length ? unanswered.length + " unanswered" : "all answered") + '</span></div><article class="card" id="exam-card">' +
+      cardHTML(it, exam.orders[i], { chosen: exam.answers[i], pips: false }) + "</article>" + calcHTML() +
+      '<div class="exam-nav"><button type="button" class="btn ghost" data-ex="prev"' + (i === 0 ? " disabled" : "") + '>Previous</button>' +
+      '<button type="button" class="btn ghost" data-ex="calc">' + (exam.calc ? "Hide calculator" : "Calculator") + "</button>" +
+      '<span class="spacer"></span>' +
+      (i < exam.items.length - 1 ? '<button type="button" class="btn ghost" data-ex="next">Next</button>' : "") +
+      '<button type="button" class="btn" data-ex="review">Review &amp; grade</button></div></div>';
   }
   function examGo(d) { if (!exam || exam.done) return; exam.pos = Math.max(0, Math.min(exam.items.length - 1, exam.pos + d)); renderExam(); }
   function selectExam(pos) {
@@ -1216,14 +1316,28 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   $("#exam-body").addEventListener("click", (e) => {
     const ch = e.target.closest(".choice");
     if (ch && exam && !exam.done) { selectExam(+ch.dataset.pos); return; }
+    // A cell in the review grid jumps back to that question.
+    const j = e.target.closest("[data-jump]");
+    if (j && exam && !exam.done) { exam.pos = +j.dataset.jump; exam.review = false; renderExam(); return; }
     const b = e.target.closest("[data-ex]");
     if (!b) return;
     const a = b.dataset.ex;
     if (a === "start") startExam();
     else if (a === "prev") examGo(-1);
     else if (a === "next") examGo(1);
+    else if (a === "review") { exam.review = true; renderExam(); }
+    else if (a === "back") { exam.review = false; renderExam(); }
+    else if (a === "calc") { exam.calc = !exam.calc; renderExam(); if (exam.calc) { const el = $("#calc-in"); if (el) el.focus(); } }
     else if (a === "grade") gradeExam();
     else if (a === "drill-misses") { $("#scope").value = "misses"; drill = { item: null }; show("drill"); }
+  });
+  // ⚠ Update ONLY the result, never re-render the view: re-rendering would rebuild the input and
+  // throw the caret to the end on every keystroke.
+  $("#exam-body").addEventListener("input", (e) => {
+    if (!exam || e.target.id !== "calc-in") return;
+    exam.calcExpr = e.target.value;
+    const out = $("#calc-out"), v = calcFmt(calcEval(exam.calcExpr));
+    if (out) out.textContent = v === "" ? "" : "= " + v;
   });
 
   // ---------- look-alikes ----------
@@ -1801,7 +1915,12 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     } else if (view === "game" && run && !run.done) {
       if (!run.answered && /^[1-4]$/.test(e.key)) { answerGame(+e.key - 1); e.preventDefault(); }
     } else if (view === "exam" && exam && !exam.done) {
-      if (/^[1-4]$/.test(e.key)) { selectExam(+e.key - 1); e.preventDefault(); }
+      // ⚠ A real session lets you click the answer OR type its letter, so accept both here.
+      //   Line 1780 already returns early for events inside an input, so typing "4" or "d" in the
+      //   calculator cannot answer a question.
+      const k = e.key.toUpperCase();
+      if (/^[1-4]$/.test(k)) { selectExam(+k - 1); e.preventDefault(); }
+      else if (/^[ABCD]$/.test(k)) { selectExam("ABCD".indexOf(k)); e.preventDefault(); }
       else if (e.key === "ArrowRight") examGo(1);
       else if (e.key === "ArrowLeft") examGo(-1);
     }
