@@ -308,6 +308,27 @@ b.key { font-weight: 600; text-decoration: underline; text-decoration-color: var
 .calc-note { flex: 1 1 100%; font: 400 .7rem/1.35 var(--mono); color: var(--ink-3); }
 .run-end { display: grid; gap: 4px; }
 .newrec { font: 800 1.1rem/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); }
+/* Broadside: two 8x8 grids. Theirs is clickable only while a shot is earned (.armed). */
+.mode.battle { border-color: var(--ink-3); }
+.bs-status { margin: 0; font: 600 .95rem/1.4 var(--sans); }
+.bs-status.ok { color: var(--good); } .bs-status.no { color: var(--bad); }
+.bs-boards { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-start; }
+.bs-side { display: grid; gap: 6px; flex: 1 1 15rem; max-width: 21rem; }
+.bs-side.mine { max-width: 17rem; }
+.bs-title { font: 600 .66rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.bs-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; }
+.bs-cell { appearance: none; aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 3px; cursor: default;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink-3); font: 600 .7rem/1 var(--mono); }
+.bs-grid.armed .bs-cell:not(.miss):not(.hit):not(.sunk) { cursor: crosshair; border-color: var(--accent); background: var(--accent-soft); }
+.bs-grid.armed .bs-cell:not(.miss):not(.hit):not(.sunk):hover { background: var(--accent); }
+.bs-cell.ship { background: var(--panel-2); border-color: var(--ink-3); }
+.bs-cell.miss::after { content: "\00B7"; font-size: 1.3rem; }
+.bs-cell.hit { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.bs-cell.hit::after { content: "\00D7"; font-size: 1rem; }
+.bs-cell.sunk { background: var(--bad); border-color: var(--bad); }
+.bs-cell.new { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bs-fleet { display: flex; flex-wrap: wrap; gap: 2px 10px; font: 400 .7rem/1.4 var(--mono); color: var(--ink-2); }
+.bs-fleet s { color: var(--ink-3); }
 
 /* ---- footer ---- */
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; padding-block: 28px 0; font-size: .74rem; line-height: 1.5; color: var(--ink-3); }
@@ -524,7 +545,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // Game totals are kept PER DAY, never as a running sum. Two devices can then merge by taking the
   // larger value for each day, which is idempotent — a plain total would inflate every time it
   // synced both ways. `best` carries the day it was set so a reset can drop it.
-  const blankGame = () => ({ xpd: {}, runs: {}, daily: {}, best: {} });
+  // `bw`/`bl` are Broadside battles won and lost, per day, for the same reason.
+  const blankGame = () => ({ xpd: {}, runs: {}, daily: {}, best: {}, bw: {}, bl: {} });
   function normGame(g) {
     const b = blankGame();
     if (!g || typeof g !== "object") return b;
@@ -536,14 +558,34 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         if (e && typeof e === "object" && Number.isFinite(+e.s)) best[k] = { s: +e.s, d: typeof e.d === "string" ? e.d : "" };
       }
     }
-    return { ...b, xpd: num(g.xpd), runs: num(g.runs), daily: num(g.daily), best };
+    return { ...b, xpd: num(g.xpd), runs: num(g.runs), daily: num(g.daily), best, bw: num(g.bw), bl: num(g.bl) };
   }
   // ⚠⚠ STATEMENTS GET THEIR OWN PROGRESS SPACE, SEPARATE FROM `cards`, AND record() NEVER TOUCHES IT.
   // "Is this statement ever correct anywhere in the pool?" is a far easier task than answering the
   // question it belongs to. Feeding its results into the question cards would raise memory levels on
   // the cheap task and silently inflate the pass estimate — which every other view depends on.
   // Same shape as a card, so the merge rule (newest answer wins, by `l`) applies unchanged.
-  const blank = (pid = P.pool) => ({ v: 2, pool: pid, updated: 0, cards: {}, stmt: {}, exams: [], game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true, exam: "2027-01-07" } });
+  // ⚠⚠ `exd` IS THE DAILY EXAM'S OWN DAY-KEYED MAP, and it is deliberately NOT `exams` or
+  // `game.daily`. `exams` is capped at 20 entries, so a 60-day streak derived from it would silently
+  // lose its early days and the streak would shorten on its own — the exact bug a stored counter
+  // would have. And `game.daily` already holds Band Chase's daily-net scores; sharing the key would
+  // conflate two unrelated streaks. One entry per day, `{s: score, n: outOf}`, merged by the same
+  // larger-value-per-key rule as every other day map, and the streak is DERIVED from which keys
+  // exist — never stored.
+  const blank = (pid = P.pool) => ({ v: 2, pool: pid, updated: 0, cards: {}, stmt: {}, exams: [], exd: {}, game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true, exam: "2027-01-07" } });
+  // Day-keyed exam results, junk-proofed the same way normGame() does its maps.
+  function normExd(x) {
+    const o = {};
+    if (x && typeof x === "object") {
+      for (const k of Object.keys(x)) {
+        const e = x[k];
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !e || typeof e !== "object") continue;
+        const s = Number(e.s), n = Number(e.n);
+        if (Number.isFinite(s) && Number.isFinite(n) && n > 0) o[k] = { s: Math.max(0, s), n };
+      }
+    }
+    return o;
+  }
   function normalize(s, pid = P.pool) {
     const b = blank(pid);
     if (!s || typeof s !== "object" || s.pool !== pid) return b;
@@ -560,6 +602,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       ...b, ...s,
       cards: s.cards && typeof s.cards === "object" ? s.cards : {},
       exams: Array.isArray(s.exams) ? s.exams.slice(-20) : [],
+      exd: normExd(s.exd),
       stmt: s.stmt && typeof s.stmt === "object" ? s.stmt : {},
       game: normGame(s.game),
       prefs: { ...b.prefs, ...(s.prefs || {}) },
@@ -773,8 +816,19 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }
     const ex = new Map();
     for (const e of [...(a.exams || []), ...(b.exams || [])]) if (e && e.t >= resetAt) ex.set(e.t, e);
+    // ⚠ The daily exam merges by BEST SCORE per day, which is commutative and idempotent like every
+    // other day map. A reset drops days before its day-key. ⚠⚠ It must be named explicitly here:
+    // `...newer` alone would take one device's whole map and discard the other's days entirely.
+    const cutDay = resetAt ? dayKey(resetAt) : "";
+    const exd = {};
+    for (const src of [normExd(a.exd), normExd(b.exd)]) {
+      for (const k of Object.keys(src)) {
+        if (k < cutDay) continue;
+        if (!exd[k] || src[k].s > exd[k].s) exd[k] = src[k];
+      }
+    }
     const newer = (a.updated || 0) >= (b.updated || 0) ? a : b;
-    return { ...newer, cards, stmt, exams: [...ex.values()].sort((x, y) => x.t - y.t).slice(-20), game: mergeGame(a.game, b.game, resetAt), resetAt, updated: Math.max(a.updated || 0, b.updated || 0) };
+    return { ...newer, cards, stmt, exd, exams: [...ex.values()].sort((x, y) => x.t - y.t).slice(-20), game: mergeGame(a.game, b.game, resetAt), resetAt, updated: Math.max(a.updated || 0, b.updated || 0) };
   }
   // ⚠ Game state must merge COMMUTATIVELY, or two devices undo each other: every map takes the larger
   // value per key, which gives the same answer whichever way round it runs and however many times.
@@ -792,15 +846,15 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       if (cut && (e.d || "") < cut) continue;
       if (!best[k] || e.s > best[k].s) best[k] = { s: e.s, d: e.d };
     }
-    return { xpd: pick(A.xpd, B.xpd), runs: pick(A.runs, B.runs), daily: pick(A.daily, B.daily), best };
+    return { xpd: pick(A.xpd, B.xpd), runs: pick(A.runs, B.runs), daily: pick(A.daily, B.daily), best, bw: pick(A.bw, B.bw), bl: pick(A.bl, B.bl) };
   }
   // What counts as "changed" — compared canonically so key order never causes a pointless write.
   const canonGame = (g) => {
     const G = normGame(g);
-    return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
+    return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily], ["bw", G.bw], ["bl", G.bl]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
       .concat([["best", Object.keys(G.best).sort().map((k) => [k, G.best[k].s, G.best[k].d])]]);
   };
-  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].s]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), s.resetAt || 0, s.prefs, canonGame(s.game)]);
+  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].s]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), Object.keys(s.exd || {}).sort().map((k) => [k, s.exd[k].s, s.exd[k].n]), s.resetAt || 0, s.prefs, canonGame(s.game)]);
   // ⚠ GitHub answers 404, not 403, when a token lacks a permission — found 2026-09-14 when the first
   //   real sync said only "GitHub answered 404". Fine-grained tokens cannot use gists at all (GitHub
   //   docs), and GitHub's default "Generate new token" makes a fine-grained one.
@@ -1015,7 +1069,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     o = o || {};
     let h = '<div class="card-head"><span class="qid">' + it.id + '</span><span class="gname">' + esc(GTITLE[it.g] || "") + "</span>";
     if (o.kind) h += '<span class="chip">' + esc(o.kind) + "</span>";
-    if (PROJECT.has(it.g)) h += '<span class="chip proj" title="This topic comes back when the QMX goes on the air">Mini-JS8</span>';
+    if (PROJECT.has(it.g)) h += '<span class="chip proj" title="This topic comes back when the QMX goes on the air">Ionopost</span>';
     if (o.pips !== false) h += pips(it.id);
     h += "</div>";
     h += figHTML(it);
@@ -1045,6 +1099,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     if (view === "listen" && v !== "listen") listenPause();
     // Leaving the game abandons the round: a timer that kept running behind another tab would come
     // back already lost, and a half-answered round is not a score worth keeping.
+    // A Broadside battle is the exception: it is saved after every move, so leaving only pauses it.
     if (view === "game" && v !== "game") { stopRun(); run = null; }
     if (v !== "drill") cancelAuto();
     view = v;
@@ -1575,6 +1630,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       blurb: "The answer is on the card and you pick the question it belongs to. Backwards from the drill, which catches answers known only by their shape." },
     sift: { name: "Sift", tag: "25 statements · true or never", n: 25, stmt: true,
       blurb: "One answer, no question. Is it ever the correct answer to anything in the pool, or is it inert text that is never right anywhere? Three questions in four are settled by that alone." },
+    broadside: { name: "Broadside", tag: "a shot for every right answer", battle: true,
+      blurb: "Answer right and you fire one shot at their hidden antennas. Answer wrong and they fire three at yours. At the exam's pass mark you win about half the time." },
     zero: { name: "Zero Beat", tag: "one miss ends it", lives: 1,
       blurb: "No clock and no second chance. How far can you get without a single mistake?" },
   };
@@ -1612,6 +1669,69 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // anything local, so it is drawn from the pool alone.
   const hash32 = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   const mulberry32 = (a) => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  // ---- Broadside: a shot for every right answer ----
+  // ⚠⚠ THE VOLLEY IS CALIBRATED, NOT A TASTE. With 8x8, a 4-3-3-2 fleet and the same hunt-and-target
+  // aim on both sides, three enemy shots per wrong answer puts the 50% win point at 75% right — the
+  // exam's own pass mark (26/35 = 74%). Simulated, seeded, and asserted in test_merge.js:
+  //   accuracy 65% → wins ~14%, 70% → ~29%, 75% → ~52%, 80% → ~76%, 85% → ~92%; ~38 questions a battle.
+  // Change the board, the fleet or the volley and that test fails, as it should: winning has to keep
+  // meaning "you would pass".
+  // A board is { at: ship index per cell or -1, ships: [{name, cells, hits}], shot: 0 none, 1 miss, 2 hit }.
+  // Plain arrays and numbers only, so a battle in progress saves as JSON and resumes on the next visit.
+  const BS_N = 8;
+  const BS_FLEET = [["Yagi", 4], ["Dipole", 3], ["Vertical", 3], ["Whip", 2]];
+  const BS_VOLLEY = 3;
+  function bsPlace(rnd) {
+    const N = BS_N, at = new Array(N * N).fill(-1), ships = [];
+    for (const [name, len] of BS_FLEET) {
+      for (;;) {
+        const h = rnd() < 0.5;
+        const r = Math.floor(rnd() * (h ? N : N - len + 1)), c = Math.floor(rnd() * (h ? N - len + 1 : N));
+        const cells = [];
+        for (let k = 0; k < len; k++) cells.push(h ? r * N + c + k : (r + k) * N + c);
+        if (cells.every((i) => at[i] < 0)) { cells.forEach((i) => { at[i] = ships.length; }); ships.push({ name, cells, hits: 0 }); break; }
+      }
+    }
+    return { at, ships, shot: new Array(N * N).fill(0) };
+  }
+  const bsSunk = (b, i) => b.at[i] >= 0 && b.ships[b.at[i]].hits === b.ships[b.at[i]].cells.length;
+  const bsOver = (b) => b.ships.every((s) => s.hits === s.cells.length);
+  function bsFire(b, i) {
+    if (b.shot[i]) return null;
+    const s = b.at[i];
+    if (s < 0) { b.shot[i] = 1; return { i, hit: false, sunk: "" }; }
+    b.shot[i] = 2;
+    const sh = b.ships[s];
+    sh.hits++;
+    return { i, hit: true, sunk: sh.hits === sh.cells.length ? sh.name : "" };
+  }
+  // Hunt and target, the standard strong-enough aim: extend a line of unsunk hits from either end,
+  // else try beside a lone hit, else a random cell of one colour of the checkerboard (every ship is
+  // at least two long, so it cannot hide on the other colour). The player's own shots are not
+  // helped by this; it is the enemy's aim, and the simulated player's.
+  function bsAim(b, rnd) {
+    const N = BS_N, isOpen = (r, c) => r >= 0 && r < N && c >= 0 && c < N && b.shot[r * N + c] === 2 && !bsSunk(b, r * N + c);
+    const free = (r, c) => r >= 0 && r < N && c >= 0 && c < N && !b.shot[r * N + c];
+    const any = (a) => a[Math.floor(rnd() * a.length)];
+    const line = [], near = [];
+    for (let i = 0; i < N * N; i++) {
+      const r = Math.floor(i / N), c = i % N;
+      if (!isOpen(r, c)) continue;
+      for (const [dr, dc] of [[0, 1], [1, 0]]) {
+        if (!isOpen(r + dr, c + dc) || isOpen(r - dr, c - dc)) continue;
+        let k = 1;
+        while (isOpen(r + k * dr, c + k * dc)) k++;
+        if (free(r - dr, c - dc)) line.push((r - dr) * N + c - dc);
+        if (free(r + k * dr, c + k * dc)) line.push((r + k * dr) * N + c + k * dc);
+      }
+      for (const [dr, dc] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) if (free(r + dr, c + dc)) near.push((r + dr) * N + c + dc);
+    }
+    if (line.length) return any(line);
+    if (near.length) return any(near);
+    const left = [], even = [];
+    for (let i = 0; i < N * N; i++) if (!b.shot[i]) { left.push(i); if ((Math.floor(i / N) + i % N) % 2 === 0) even.push(i); }
+    return any(even.length ? even : left);
+  }
   function dailyQueue(key) {
     const rnd = mulberry32(hash32(P.pool + "|" + key)), gs = GROUPS.slice();
     for (let i = gs.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [gs[i], gs[j]] = [gs[j], gs[i]]; }
@@ -1663,6 +1783,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   }
   function answerGame(pos) {
     if (!run || run.done || run.answered) return;
+    if (run.cfg.battle) return battleAnswer(pos);
     const it = run.queue[run.i];
     if (run.cfg.stmt && pos > 1) return;                   // only two choices exist in a Sift round
     const ok = run.cfg.stmt ? ((pos === 0) === it.isTrue)
@@ -1698,6 +1819,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   }
   function endRun() {
     stopRun();
+    if (run && run.cfg.battle) { bsSave(); run = null; renderGame(); return; }
     if (!run || run.done) return;
     run.done = true;
     if (run.right || run.wrong) {
@@ -1712,6 +1834,181 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }
     renderGame();
   }
+  // ---- Broadside: the round ----
+  // ⚠ Questions are drawn LIKE THE EXAM — a random group, then a random question in it — not weakest
+  //   first like the other rounds. The volley is calibrated so that winning means "at the pass mark",
+  //   and that only holds if the accuracy inside a battle is the accuracy the exam would see. Every
+  //   answer still goes through record(), and a weak question still scores more (valueOf).
+  const bsKey = (pid) => "element-drill.broadside." + pid;
+  const bsLeft = (b) => b.ships.filter((x) => x.hits < x.cells.length).length;
+  const bsTotal = (m) => Object.values(m).reduce((a, v) => a + v, 0);
+  function bsLoad(pid) {
+    try {
+      const b = JSON.parse(localStorage.getItem(bsKey(pid)));
+      return b && b.v === 1 && b.en && b.me ? b : null;
+    } catch (e) { return null; }
+  }
+  // ⚠ A battle in progress lives in THIS browser only. Synced state must merge commutatively, and a
+  //   half-played board has no sensible merge — two devices would each hold a different war. What
+  //   does sync is the result: battles won and lost per day (`bw`/`bl`), merged like every day map.
+  function bsSave() {
+    if (!run || !run.cfg.battle) return;
+    const keep = { v: 1, en: run.en, me: run.me, asked: run.asked, qid: run.queue[0].id, order: run.order, phase: run.phase,
+      choice: run.choice, answered: run.answered, right: run.right, wrong: run.wrong, score: run.score, missed: run.missed.map((it) => it.id),
+      volley: run.volley, mine: run.mine };
+    try { localStorage.setItem(bsKey(run.pool), JSON.stringify(keep)); } catch (e) { /* private mode */ }
+  }
+  function bsClear(pid) { try { localStorage.removeItem(bsKey(pid)); } catch (e) { /* private mode */ } }
+  function bsDraw(asked) {
+    const seen = new Set(asked);
+    for (let t = 0; t < 50; t++) {
+      const a = byGroup.get(GROUPS[Math.floor(Math.random() * GROUPS.length)].id);
+      const it = a[Math.floor(Math.random() * a.length)];
+      if (!seen.has(it.id)) return it;
+    }
+    return ORDER[Math.floor(Math.random() * ORDER.length)];
+  }
+  function bsAsk() {
+    const it = bsDraw(run.asked);
+    run.asked.push(it.id);
+    run.queue = [it]; run.i = 0;
+    run.answered = false; run.choice = null; run.gain = 0; run.order = shuffle([0, 1, 2, 3]);
+    run.phase = "ask"; run.volley = []; run.mine = null;
+  }
+  function startBattle(fresh) {
+    stopRun();
+    const saved = fresh ? null : bsLoad(P.pool);
+    run = { mode: "broadside", cfg: MODES.broadside, pool: P.pool, queue: [], i: 0, score: 0, combo: 0, bestCombo: 0,
+      right: 0, wrong: 0, missed: [], done: false, gain: 0, endsAt: 0, startedP: passProb(), asked: [] };
+    if (saved && Q.get(saved.qid)) {
+      Object.assign(run, saved, { queue: [Q.get(saved.qid)], missed: saved.missed.map((id) => Q.get(id)).filter(Boolean) });
+      delete run.qid; delete run.v;
+      // Saved mid-pause after a shot: the timer that would have moved on did not survive the reload.
+      if (run.phase === "fired") { if (bsOver(run.en)) { finishBattle(true); return; } bsAsk(); }
+    } else {
+      run.en = bsPlace(Math.random); run.me = bsPlace(Math.random);
+      bsAsk();
+    }
+    bsSave(); renderGame();
+  }
+  function battleAnswer(pos) {
+    const it = run.queue[0], ok = run.order[pos] === it.c;
+    record(it.id, ok);
+    run.answered = true; run.choice = pos;
+    if (ok) {
+      run.right++;
+      run.gain = valueOf(it.id);
+      run.score += run.gain;
+      // Credited as earned, not at the end: a battle can span days, and the streak reads these keys.
+      const g = state.game, k = dayKey(Date.now());
+      g.xpd[k] = (g.xpd[k] || 0) + run.gain;
+      touch();
+      run.phase = "aim";
+    } else {
+      run.wrong++; run.gain = 0; run.missed.push(it);
+      run.volley = [];
+      for (let v = 0; v < BS_VOLLEY && !bsOver(run.me); v++) run.volley.push(bsFire(run.me, bsAim(run.me, Math.random)));
+      run.phase = "incoming";
+    }
+    bsSave(); renderGame();
+    if (ok) { const e = $("#bs-enemy"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  }
+  function battleFire(i) {
+    if (!run || run.phase !== "aim" || run.en.shot[i]) return;
+    run.mine = bsFire(run.en, i);
+    run.phase = "fired";
+    bsSave(); renderGame();
+    setTimeout(() => {
+      if (!run || run.done || run.phase !== "fired") return;
+      if (bsOver(run.en)) return finishBattle(true);
+      bsAsk(); bsSave(); renderGame();
+    }, run.mine.sunk ? 1500 : 850);
+  }
+  function battleContinue() {
+    if (!run || run.phase !== "incoming") return;
+    if (bsOver(run.me)) return finishBattle(false);
+    bsAsk(); bsSave(); renderGame();
+  }
+  function finishBattle(won) {
+    if (!run || run.done) return;
+    run.done = true; run.won = won;
+    const g = state.game, k = dayKey(Date.now()), m = won ? g.bw : g.bl;
+    m[k] = (m[k] || 0) + 1;
+    g.runs[k] = (g.runs[k] || 0) + 1;
+    touch(); bsClear(run.pool); renderGame();
+  }
+  const COLS = "ABCDEFGH";
+  const bsName = (i) => COLS[Math.floor(i / BS_N)] + (i % BS_N + 1);
+  // `reveal` shows ships (always on your own board, and on theirs once the battle is over).
+  function bsGridHTML(b, opts) {
+    const fresh = new Set((opts.fresh || []).map((r) => r.i));
+    let h = '<div class="bs-grid' + (opts.armed ? " armed" : "") + '"' + (opts.id ? ' id="' + opts.id + '"' : "") + ">";
+    for (let i = 0; i < BS_N * BS_N; i++) {
+      let cls = "bs-cell";
+      const sunk = bsSunk(b, i);
+      if (b.shot[i] === 1) cls += " miss";
+      else if (b.shot[i] === 2) cls += sunk ? " sunk" : " hit";
+      else if (opts.reveal && b.at[i] >= 0) cls += " ship";
+      if (fresh.has(i)) cls += " new";
+      const label = bsName(i) + (b.shot[i] === 1 ? " miss" : b.shot[i] === 2 ? (sunk ? " sunk" : " hit") : "");
+      h += '<button type="button" class="' + cls + '"' + (opts.armed && !b.shot[i] ? ' data-cell="' + i + '"' : " disabled") +
+        ' aria-label="' + label + '" title="' + label + '"></button>';
+    }
+    return h + "</div>";
+  }
+  const bsFleetHTML = (b) => '<div class="bs-fleet">' + b.ships.map((x) => {
+    const t = esc(x.name) + " " + x.cells.length;
+    return x.hits === x.cells.length ? "<s>" + t + "</s>" : "<span>" + t + "</span>";
+  }).join("") + "</div>";
+  function bsBoardsHTML(reveal) {
+    const armed = run.phase === "aim" && !run.done;
+    return '<div class="bs-boards"><div class="bs-side"><span class="bs-title">Their antennas · ' + bsLeft(run.en) + " of " + run.en.ships.length + " standing</span>" +
+      bsGridHTML(run.en, { armed, reveal, id: "bs-enemy", fresh: run.mine && run.phase === "fired" ? [run.mine] : [] }) + bsFleetHTML(run.en) + "</div>" +
+      '<div class="bs-side mine"><span class="bs-title">Yours · ' + bsLeft(run.me) + " of " + run.me.ships.length + " standing</span>" +
+      bsGridHTML(run.me, { reveal: true, fresh: run.phase === "incoming" ? run.volley : [] }) + bsFleetHTML(run.me) + "</div></div>";
+  }
+  function battleHTML() {
+    let msg = "", cls = "";
+    if (run.phase === "ask") msg = "Answer right to earn a shot. A wrong answer gives them " + BS_VOLLEY + ".";
+    else if (run.phase === "aim") { msg = "Right" + (run.gain ? " (+" + run.gain + ")" : "") + " — pick a square on their grid."; cls = "ok"; }
+    else if (run.phase === "fired") {
+      const r = run.mine;
+      msg = bsName(r.i) + ": " + (r.sunk ? "hit — their " + r.sunk + " is down!" : r.hit ? "hit!" : "miss.");
+      cls = r.hit ? "ok" : "";
+    } else if (run.phase === "incoming") {
+      const hits = run.volley.filter((r) => r.hit).length, down = run.volley.filter((r) => r.sunk).map((r) => r.sunk);
+      msg = "Wrong — they fire " + run.volley.length + ": " + run.volley.map((r) => bsName(r.i) + " " + (r.hit ? "hit" : "miss")).join(", ") +
+        (down.length ? ". Your " + down.join(" and ") + " " + (down.length > 1 ? "are" : "is") + " down." : hits ? "." : ". All missed.");
+      cls = "no";
+    }
+    let h = '<div class="view"><div class="hud"><span class="sc">' + run.score.toLocaleString() + "</span>" +
+      "<span>" + run.right + " right · " + run.wrong + " wrong" + (run.right + run.wrong ? " · " + Math.round(100 * run.right / (run.right + run.wrong)) + "%" : "") + "</span></div>";
+    h += '<p class="bs-status ' + cls + '" role="status">' + esc(msg) + "</p>";
+    // The question hides once a shot is earned: you got it right, and the grid is what matters now.
+    if (run.phase === "ask" || run.phase === "incoming") h += '<article class="card" id="run-card">' + runCardHTML() + "</article>";
+    h += bsBoardsHTML(false);
+    h += '<div class="exam-nav">' + (run.phase === "incoming" ? '<button type="button" class="btn" data-game="bs-continue">' + (bsOver(run.me) ? "See the result" : "Next question") + "</button>" : "") +
+      '<span class="meta" style="margin-left:0">' + (run.phase === "ask" ? "Keys 1–4 answer" : run.phase === "incoming" ? "Enter continues" : "") + "</span>" +
+      '<span class="spacer"></span><button type="button" class="btn ghost" data-game="bs-leave">Leave — it is saved</button>' +
+      '<button type="button" class="btn ghost" data-game="bs-strike">Strike your colours</button></div>';
+    return h + "</div>";
+  }
+  function battleEndHTML() {
+    const g = state.game, n = run.right + run.wrong;
+    let h = '<div class="view"><div class="result-head"><span class="score">' + (run.won ? "Won" : "Lost") + "</span>" +
+      '<span class="lede">' + (run.won ? "Their antennas are all down." : "Your antennas are all down.") + " " + run.right + " right, " + run.wrong + " wrong" +
+      (n ? " (" + Math.round(100 * run.right / n) + "%)" : "") + " over " + n + " questions.</span></div>";
+    h += '<div class="run-end"><p class="rank-meta">+' + run.score.toLocaleString() + " points · battles won " + bsTotal(g.bw) + ", lost " + bsTotal(g.bl) + "</p>" +
+      '<p class="rank-meta">Chance of passing: ' + fmtPct(passProb()) + "</p></div>";
+    h += bsBoardsHTML(true);
+    if (run.missed.length) {
+      h += '<div><p class="eyebrow">Missed — these are back in your drill</p>' + run.missed.map((it) =>
+        '<div class="miss"><p class="q"><span class="qid">' + it.id + "</span> " + esc(it.text) + '</p><p class="right">Answer: ' +
+        (it.keys && it.keys.length ? markSpans(it.answers[it.c], it.keys, '<b class="key">', "</b>") : esc(it.answers[it.c])) + "</p></div>").join("") + "</div>";
+    }
+    h += '<div class="exam-nav"><button type="button" class="btn" data-game="bs-new">New battle</button><button type="button" class="btn ghost" data-game="home">Back to the game</button></div>';
+    return h + "</div>";
+  }
   const bandClass = (gp) => gp >= CONFIRMED_P ? "qsl" : gp >= WORKED_P ? "worked" : gp >= HEARD_P ? "heard" : "";
   function gameHomeHTML() {
     const g = state.game, xp = xpTotal(g), r = rankOf(xp), st = streakOf(g), today = dayKey(Date.now());
@@ -1724,6 +2021,11 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     h += '<div class="modes">';
     h += '<button type="button" class="mode daily' + (doneToday ? " done" : "") + '" data-game="daily"><span class="tag">' + esc(MODES.daily.tag) + "</span><b>" + esc(MODES.daily.name) + "</b><p>" + esc(MODES.daily.blurb) + "</p>" +
       '<span class="pb">' + (doneToday ? "Worked today — " + g.daily[today].toLocaleString() + " points. Play again for practice." : st ? "Not worked today — the streak is at " + st + "." : "Work it today to start a streak.") + "</span></button>";
+    {
+      const sv = bsLoad(P.pool), w = bsTotal(g.bw), l = bsTotal(g.bl);
+      h += '<button type="button" class="mode battle" data-game="broadside"><span class="tag">' + esc(MODES.broadside.tag) + "</span><b>" + esc(MODES.broadside.name) + "</b><p>" + esc(MODES.broadside.blurb) + "</p>" +
+        '<span class="pb">' + (sv ? "Battle in progress — theirs " + bsLeft(sv.en) + " standing, yours " + bsLeft(sv.me) + ". Tap to resume." : w + l ? "Won " + w + " · lost " + l : "No battles yet") + "</span></button>";
+    }
     for (const m of ["sift", "pileup", "zero", "cue", "reverse"]) {
       const b = g.best[m];
       let extra = "";
@@ -1835,18 +2137,26 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     return h + "</div>";
   }
   function renderGame() {
-    $("#game-body").innerHTML = !run ? gameHomeHTML() : run.done ? endHTML() : runHTML();
+    $("#game-body").innerHTML = !run ? gameHomeHTML()
+      : run.cfg.battle ? (run.done ? battleEndHTML() : battleHTML())
+      : run.done ? endHTML() : runHTML();
   }
   $("#game-body").addEventListener("click", (e) => {
     const ch = e.target.closest(".choice");
     if (ch && !ch.disabled) { answerGame(+ch.dataset.pos); return; }
+    const cell = e.target.closest("[data-cell]");
+    if (cell) { battleFire(+cell.dataset.cell); return; }
     const gcell = e.target.closest("[data-group]");
     if (gcell) { $("#scope").value = gcell.dataset.group; drill = { item: null }; show("drill"); return; }
     const b = e.target.closest("[data-game]");
     if (!b) return;
     const a = b.dataset.game;
     if (a === "home") { stopRun(); run = null; renderGame(); }
-    else if (a === "quit") endRun();
+    else if (a === "quit" || a === "bs-leave") endRun();
+    else if (a === "broadside") startBattle(false);
+    else if (a === "bs-new") startBattle(true);
+    else if (a === "bs-continue") battleContinue();
+    else if (a === "bs-strike") { if (window.confirm("Strike your colours? This battle counts as a loss.")) finishBattle(false); }
     else startRun(a);
   });
 
@@ -1895,6 +2205,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     P = POOLS.get(id); indexPool(P); state = normalize(loadLocal());
     try { localStorage.setItem(LS_POOL, id); } catch (e) { /* private mode */ }
     drill = { item: null }; exam = null; listen.queue = []; listen.i = 0;
+    stopRun(); run = null;                          // a round, and a battle, belong to the pool they started in
     paintPoolChrome(); buildSelects(); applyPrefs(); updateReadout();
     show(view);
     if (dbNs) attachDoc();
@@ -1913,7 +2224,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         nextDrill(); e.preventDefault();
       }
     } else if (view === "game" && run && !run.done) {
-      if (!run.answered && /^[1-4]$/.test(e.key)) { answerGame(+e.key - 1); e.preventDefault(); }
+      if (run.cfg.battle && run.phase === "incoming" && (e.key === "Enter" || e.key === " ")) { battleContinue(); e.preventDefault(); }
+      else if (!run.answered && /^[1-4]$/.test(e.key)) { answerGame(+e.key - 1); e.preventDefault(); }
     } else if (view === "exam" && exam && !exam.done) {
       // ⚠ A real session lets you click the answer OR type its letter, so accept both here.
       //   Line 1780 already returns early for events inside an input, so typing "4" or "d" in the
