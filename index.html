@@ -354,7 +354,7 @@ label.btn { display: inline-flex; align-items: center; }
       <div class="pools" id="pools" role="group" aria-label="Question pool"></div>
       <p class="brand-meta" id="brand-meta">Technician pool · 2026–2030 · 409 questions</p>
     </div>
-    <button type="button" class="readout" id="readout" aria-label="Chance of passing now — open Progress">
+    <button type="button" class="readout" id="readout" aria-label="Chance of passing — open Progress">
       <span class="ro-label" id="ro-label">Pass now</span><span class="ro-val" id="ro-val">—</span>
       <span class="ro-meter"><span id="ro-bar"></span></span>
     </button>
@@ -671,12 +671,42 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // ⚠ And it is lifted for guessing: FSRS's R is P(recall), but a four-option question never scores
   // below 25%, so P(correct) = R + (1 − R)·0.25. Omitting that reads far too pessimistically.
   const GUESS = 0.25;
+  // ⚠⚠ AND IT ASSUMES THE SCHEDULE IS KEPT (2026-11-07). The first exam-day version decayed each card
+  // from its LAST answer straight to the exam date, i.e. it forecast "if you never open this again".
+  // With the exam two months out, a card answered right once (S = 2.3 d) decays to ~0.70, so even
+  // the WHOLE pool seen once read ~37%, and half the pool read <0.1% for weeks of real study. The
+  // operator reported it stuck at <0.1%. So each card is now walked forward through the reviews
+  // the scheduler will give it before the exam, each assumed answered right on its due date
+  // (overdue ones today), and decays only from the last of them. The interval cap guarantees a
+  // review in the final quarter of the run-up, so a seen card ends high; what keeps the figure
+  // low is UNSEEN questions, which stay a 1-in-4 guess — that is the honest lever, and pacing()
+  // already says how many a day it takes. Slightly optimistic: ~10% of real reviews miss.
+  const PROJECT_MAX = 64;  // reviews walked per card; the cap converges long before this
+  function examR(c, horizon, now) {
+    let s = c.s, f = c.f, last = c.l || now, due = Math.max(c.d || 0, now);
+    for (let i = 0; i < PROJECT_MAX && due < horizon; i++) {
+      const el = Math.max(0, (due - last) / 864e5);
+      s = el < 1 ? fsrsShortS(s, GOOD) : fsrsRecallS(f, s, fsrsR(el, s), GOOD);
+      f = fsrsNextD(f, GOOD);
+      last = due;
+      due = last + capToExam(fsrsInterval(s) * 864e5, last);
+    }
+    return fsrsR(Math.max(0, (horizon - last) / 864e5), s);
+  }
+  // ⚠ pOf stays UNPROJECTED: weakest-first ordering, the game's question values, the band map and
+  // the cram sheet all rank cards by it, and projected every seen card reads ~0.95 and the ranking
+  // goes flat. pOf answers "how well is this known"; pExam answers "what will exam day look like".
   function pOf(id) {
     const c = state.cards[id];
     if (!c || c.s === undefined) return GUESS;
     const horizon = examTs() || Date.now();
     const days = Math.max(0, (horizon - (c.l || Date.now())) / 864e5);
     return GUESS + (1 - GUESS) * fsrsR(days, c.s);
+  }
+  function pExam(id) {
+    const c = state.cards[id], now = Date.now(), t = examTs();
+    if (!c || c.s === undefined || !t || t <= now) return pOf(id);
+    return GUESS + (1 - GUESS) * examR(c, t, now);
   }
   // Shared cut-points on the pOf scale, defined once so the game's band map, the progress view and
   // the cram sheet cannot drift apart from each other or from the pass estimate.
@@ -702,7 +732,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   }
   const groupP = (g) => { const a = byGroup.get(g); return a.reduce((s, it) => s + pOf(it.id), 0) / a.length; };
   function passProb() {
-    const ps = GROUPS.map((g) => groupP(g.id));
+    const ps = GROUPS.map((g) => { const a = byGroup.get(g.id); return a.reduce((s, it) => s + pExam(it.id), 0) / a.length; });
     const dp = new Float64Array(ps.length + 1); dp[0] = 1;
     for (const p of ps) { for (let k = ps.length; k >= 1; k--) dp[k] = dp[k] * (1 - p) + dp[k - 1] * p; dp[0] *= 1 - p; }
     let s = 0; for (let k = P.need; k <= ps.length; k++) s += dp[k];
@@ -1564,13 +1594,13 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     // is a forecast, not a snapshot. Say which one it is.
     const examPref = (state.prefs && state.prefs.exam) || "", pace = pacing();
     let h = '<div class="view"><div><p class="eyebrow">If you sit the ' + esc(P.name) + " exam " +
-      (examPref ? "on " + esc(fmtDate(examPref)) : "today") + '</p><div class="hero-num"><span class="big">' + fmtPct(pp) + '</span><span class="hero-cap">chance of ' + P.need + " or more out of 35</span></div></div>";
+      (examPref ? "on " + esc(fmtDate(examPref)) + " and keep up with your reviews" : "today") + '</p><div class="hero-num"><span class="big">' + fmtPct(pp) + '</span><span class="hero-cap">chance of ' + P.need + " or more out of 35</span></div></div>";
     h += '<div class="controls"><label for="exam-date">Exam date</label>' +
       '<input type="date" id="exam-date" value="' + esc(examPref) + '">' +
       (examPref ? '<button type="button" class="reveal" data-exam="clear">Clear</button>' : '<span class="meta">No date set — reviews are not capped and the estimate is for today.</span>') + "</div>";
     if (pace) h += '<p class="lede">' + Math.round(pace.days) + " day" + (Math.round(pace.days) === 1 ? "" : "s") + " to go · " + pace.unseen + " of " + P.q.length + " never seen · <b>" +
       (pace.perDay < 10 ? pace.perDay.toFixed(1) : Math.round(pace.perDay)) + " new a day</b> to get through the whole pool first. Nothing is scheduled past the exam.</p>";
-    h += '<p class="lede">Each exam draws one question from each of the 35 groups below. This comes from how well you know each group — a group you haven\'t studied counts as a 1-in-4 guess. Tap a group to drill it.</p>';
+    h += '<p class="lede">Each exam draws one question from each of the 35 groups below. The bars show what each group would be worth on the day if you stopped studying now; the chance above assumes you keep up with your reviews, and counts a question you haven\'t seen yet as a 1-in-4 guess, so covering the pool is what moves it most. Tap a group to drill it.</p>';
     h += '<div class="stats"><div class="stat"><b>' + seen + "<small>/" + P.q.length + '</small></b><span>Seen</span></div><div class="stat"><b>' + solid + '</b><span>Solid (a week+)</span></div><div class="stat"><b>' + due + '</b><span>Due now</span></div><div class="stat"><b>' + (state.exams || []).length + "</b><span>Exams taken</span></div></div>";
     h += "<div>";
     for (const s of P.subs) {
