@@ -316,7 +316,58 @@ b.key { font-weight: 600; text-decoration: underline; text-decoration-color: var
 .bs-side { display: grid; gap: 6px; flex: 1 1 15rem; max-width: 21rem; }
 .bs-side.mine { max-width: 17rem; }
 .bs-title { font: 600 .66rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
-.bs-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; }
+.bs-side { scroll-margin-top: 10rem; scroll-margin-bottom: 4.5rem; }
+.bs-grid { display: grid; grid-template-columns: repeat(var(--bs-n, 8), minmax(0, 1fr)); gap: 3px; }
+.bs-opp { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0; font: 400 .78rem/1.35 var(--mono); color: var(--ink-2); }
+.bs-opp b { font: 700 .95rem/1 var(--mono); letter-spacing: .04em; color: var(--ink); }
+.bs-ticker { margin: 0; min-height: 1.4em; font: 600 .82rem/1.4 var(--mono); color: var(--ink-2); }
+.bs-ticker .hit { color: var(--bad); } .bs-ticker .down { color: var(--bad); font-weight: 800; }
+.bs-ticker.theirs .hit, .bs-ticker.theirs .down { color: var(--good); }
+.bs-fleet span, .bs-fleet s { padding: 1px 6px; border-radius: 3px; border: 1px solid var(--line); }
+.bs-fleet s { text-decoration-thickness: 2px; background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.bs-side:not(.mine) .bs-fleet s { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.bs-fleet .just { animation: bs-pop .6s ease-out; }
+.bs-banner { position: fixed; left: 50%; top: 38%; z-index: 20; transform: translate(-50%, -50%); pointer-events: none;
+  padding: 14px 26px; border-radius: 8px; background: var(--good); color: var(--ground); box-shadow: var(--shadow);
+  font: 800 2.1rem/1 var(--display); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; max-width: calc(100vw - 32px);
+  animation: bs-banner 1.7s ease-out forwards; }
+.bs-banner.lost { background: var(--bad); }
+.bs-banner small { display: block; margin-top: 6px; font: 600 .72rem/1 var(--mono); letter-spacing: .08em; }
+@keyframes bs-banner { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  20% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes bs-pop { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+@keyframes bs-land { 0% { transform: scale(1.3); } 100% { transform: scale(1); } }
+.bs-cell.land { animation: bs-land .35s ease-out; }
+.bs-sound { font-size: .75rem; }
+.bs-streak { font: 400 .74rem/1.3 var(--mono); color: var(--ink-3); }
+.bs-status.fix { color: var(--accent-ink); }
+.card.repair { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), var(--shadow); }
+.bs-note { margin: 0; font: 400 .8rem/1.4 var(--mono); color: var(--accent-ink); }
+.bs-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.bs-tool[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--ground); }
+.bs-hint { flex: 1 1 100%; font: 400 .74rem/1.35 var(--mono); color: var(--ink-3); }
+.bs-grid.tapall .bs-cell { cursor: crosshair; }
+.bs-grid.tapall .bs-cell:not(.ship):not(.miss):not(.hit):not(.sunk):not(.clear) { border-color: var(--accent); }
+.bs-grid.tapall .bs-cell:hover { outline: 2px solid var(--accent); }
+.bs-cell.miss.rep::after { content: none; }
+.bs-cell.rep { font: 700 .72rem/1 var(--mono); }
+.bs-cell.rep.d1 { color: var(--bad); } .bs-cell.rep.d2 { color: var(--accent-ink); } .bs-cell.rep.d3 { color: var(--ink-2); } .bs-cell.rep.d4 { color: var(--ink-3); font-weight: 400; }
+.bs-cell.clear { background: transparent; border-style: dashed; opacity: .5; }
+.bs-grid.armed .bs-cell.clear:not(.miss):not(.hit):not(.sunk) { background: transparent; border-color: var(--line); }
+.bs-cell.contact { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+.bs-cell.contact::after { content: "\25C6"; font-size: .8rem; }
+.bs-cell.swept { box-shadow: inset 0 0 0 2px var(--accent); }
+.bs-banner.perk { background: var(--accent); }
+.bs-banner small { white-space: normal; }
+.bs-report { display: grid; gap: 4px; }
+.bs-big { margin: 0; font: 700 1.05rem/1.35 var(--sans); }
+.bs-big.ok { color: var(--good); } .bs-big.no { color: var(--bad); }
+.bs-groups { display: grid; gap: 6px; }
+.bs-group { appearance: none; text-align: left; cursor: pointer; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: 400 .86rem/1.35 var(--sans); }
+.bs-group b { font-family: var(--mono); }
+.bs-group span { display: block; font: 400 .72rem/1.3 var(--mono); color: var(--ink-3); }
+.bs-group.sunk { border-color: var(--good); }
+.bs-group:hover { border-color: var(--accent); }
 .bs-cell { appearance: none; aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 3px; cursor: default;
   background: var(--panel); border: 1px solid var(--line); color: var(--ink-3); font: 600 .7rem/1 var(--mono); }
 .bs-grid.armed .bs-cell:not(.miss):not(.hit):not(.sunk) { cursor: crosshair; border-color: var(--accent); background: var(--accent-soft); }
@@ -546,7 +597,11 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // larger value for each day, which is idempotent — a plain total would inflate every time it
   // synced both ways. `best` carries the day it was set so a reset can drop it.
   // `bw`/`bl` are Broadside battles won and lost, per day, for the same reason.
-  const blankGame = () => ({ xpd: {}, runs: {}, daily: {}, best: {}, bw: {}, bl: {} });
+  // `bwo`/`blo` are the same results against EACH opponent, keyed "<day>|<call>" — day first, so the
+  //   reset cut (`k < cut`, a string compare against a day key) drops them exactly like a day map.
+  // `bdw`/`bdl` are the DAILY battle, per day: won as 1000 − shots (so larger-wins keeps the fewest
+  //   shots), lost as 1.
+  const blankGame = () => ({ xpd: {}, runs: {}, daily: {}, best: {}, bw: {}, bl: {}, bwo: {}, blo: {}, bdw: {}, bdl: {} });
   function normGame(g) {
     const b = blankGame();
     if (!g || typeof g !== "object") return b;
@@ -558,7 +613,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         if (e && typeof e === "object" && Number.isFinite(+e.s)) best[k] = { s: +e.s, d: typeof e.d === "string" ? e.d : "" };
       }
     }
-    return { ...b, xpd: num(g.xpd), runs: num(g.runs), daily: num(g.daily), best, bw: num(g.bw), bl: num(g.bl) };
+    return { ...b, xpd: num(g.xpd), runs: num(g.runs), daily: num(g.daily), best, bw: num(g.bw), bl: num(g.bl), bwo: num(g.bwo), blo: num(g.blo), bdw: num(g.bdw), bdl: num(g.bdl) };
   }
   // ⚠⚠ STATEMENTS GET THEIR OWN PROGRESS SPACE, SEPARATE FROM `cards`, AND record() NEVER TOUCHES IT.
   // "Is this statement ever correct anywhere in the pool?" is a far easier task than answering the
@@ -876,12 +931,13 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       if (cut && (e.d || "") < cut) continue;
       if (!best[k] || e.s > best[k].s) best[k] = { s: e.s, d: e.d };
     }
-    return { xpd: pick(A.xpd, B.xpd), runs: pick(A.runs, B.runs), daily: pick(A.daily, B.daily), best, bw: pick(A.bw, B.bw), bl: pick(A.bl, B.bl) };
+    return { xpd: pick(A.xpd, B.xpd), runs: pick(A.runs, B.runs), daily: pick(A.daily, B.daily), best, bw: pick(A.bw, B.bw), bl: pick(A.bl, B.bl),
+      bwo: pick(A.bwo, B.bwo), blo: pick(A.blo, B.blo), bdw: pick(A.bdw, B.bdw), bdl: pick(A.bdl, B.bdl) };
   }
   // What counts as "changed" — compared canonically so key order never causes a pointless write.
   const canonGame = (g) => {
     const G = normGame(g);
-    return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily], ["bw", G.bw], ["bl", G.bl]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
+    return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily], ["bw", G.bw], ["bl", G.bl], ["bwo", G.bwo], ["blo", G.blo], ["bdw", G.bdw], ["bdl", G.bdl]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
       .concat([["best", Object.keys(G.best).sort().map((k) => [k, G.best[k].s, G.best[k].d])]]);
   };
   const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].s]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), Object.keys(s.exd || {}).sort().map((k) => [k, s.exd[k].s, s.exd[k].n]), s.resetAt || 0, s.prefs, canonGame(s.game)]);
@@ -1660,8 +1716,12 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       blurb: "The answer is on the card and you pick the question it belongs to. Backwards from the drill, which catches answers known only by their shape." },
     sift: { name: "Sift", tag: "25 statements · true or never", n: 25, stmt: true,
       blurb: "One answer, no question. Is it ever the correct answer to anything in the pool, or is it inert text that is never right anywhere? Three questions in four are settled by that alone." },
-    broadside: { name: "Broadside", tag: "a shot for every right answer", battle: true,
-      blurb: "Answer right and you fire one shot at their hidden antennas. Answer wrong and they fire three at yours. At the exam's pass mark you win about half the time." },
+    broadside: { name: "Broadside", tag: "8×8 · four antennas · ~20 questions", battle: true, size: "full",
+      blurb: "Answer right and you fire one shot at their hidden antennas; answer wrong and they fire four at yours. Every miss gets a signal report, runs earn sweeps and salvos, and a missed question comes back to repair the damage. At the exam's pass mark you win about half the time." },
+    skirmish: { name: "Skirmish", tag: "6×6 · three antennas · ~13 questions", battle: true, size: "skirmish",
+      blurb: "The same fight on a smaller board, a few minutes long. Same odds: at the pass mark you win about half the time." },
+    bsdaily: { name: "Daily battle", tag: "6×6 · the same board everywhere today", battle: true, size: "skirmish", daily: true,
+      blurb: "One battle a day against a fleet hidden the same way on every device. One counted try: how many shots does it take you to sink them?" },
     zero: { name: "Zero Beat", tag: "one miss ends it", lives: 1,
       blurb: "No clock and no second chance. How far can you get without a single mistake?" },
   };
@@ -1700,49 +1760,106 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   const hash32 = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   const mulberry32 = (a) => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   // ---- Broadside: a shot for every right answer ----
-  // ⚠⚠ THE VOLLEY IS CALIBRATED, NOT A TASTE. With 8x8, a 4-3-3-2 fleet and the same hunt-and-target
-  // aim on both sides, three enemy shots per wrong answer puts the 50% win point at 75% right — the
-  // exam's own pass mark (26/35 = 74%). Simulated, seeded, and asserted in test_merge.js:
-  //   accuracy 65% → wins ~14%, 70% → ~29%, 75% → ~52%, 80% → ~76%, 85% → ~92%; ~38 questions a battle.
-  // Change the board, the fleet or the volley and that test fails, as it should: winning has to keep
-  // meaning "you would pass".
-  // A board is { at: ship index per cell or -1, ships: [{name, cells, hits}], shot: 0 none, 1 miss, 2 hit }.
-  // Plain arrays and numbers only, so a battle in progress saves as JSON and resumes on the next visit.
-  const BS_N = 8;
-  const BS_FLEET = [["Yagi", 4], ["Dipole", 3], ["Vertical", 3], ["Whip", 2]];
-  const BS_VOLLEY = 3;
-  function bsPlace(rnd) {
-    const N = BS_N, at = new Array(N * N).fill(-1), ships = [];
-    for (const [name, len] of BS_FLEET) {
+  // ⚠⚠ THE RULES ARE CALIBRATED, NOT A TASTE: at the exam's pass mark (26/35 = 74%) you should win
+  //   about half your battles, so that winning keeps meaning "you would pass". test_merge.js plays
+  //   seeded battles under these exact rules (a simulated player who uses every perk) and asserts
+  //   it for both sizes. Change the board, the fleet, the volley or a perk and that test fails.
+  // History: 2026-10-21 the volley was 3 against plain hunt-and-target (38 questions a battle).
+  // ⚠ 2026-11-12 the operator asked for perks, and they all help YOU, so the rules were re-tuned
+  //   together. Simulated, 3000+ battles a point:
+  //     signal reports on EVERY miss, for BOTH sides — alone it changes nothing (74% → 48%) but
+  //       halves a battle (38 → 25 questions): "they hear your reports too" is what keeps it fair;
+  //     + DF sweep every 3 in a row, salvo every 9, repair 4 turns after a miss  → 74% wins ~77%;
+  //     + volley 4 (the counterweight)  → full 65%/74%/85% → ~17%/50%/91%, ~20 questions;
+  //                                        skirmish        → ~21%/47%/84%, ~13 questions
+  //     (the test's own figures, under exactly these functions; volley 3 gives 76%/68% and fails).
+  //   The curve is flatter than before (perks add swing), so the test's outer bounds are looser.
+  //   ⚠ The simulated player uses every perk perfectly; a person will do a little worse, so the
+  //   real pass-mark win rate sits a little BELOW the figure. The page shades the squares the
+  //   reports rule out, so the deduction itself is given to you, not left to skill.
+  // A board is { n, at: ship index per cell or -1, ships: [{name, cells, hits, g?}], shot: 0 none,
+  //   1 miss, 2 hit, rep: [[cell, distance]] the signal reports so far, seen: 1 contact / -1 clear
+  //   from a DF sweep, 0 unknown }. Plain arrays and numbers only, so a battle in progress saves as
+  //   JSON. A board saved before 2026-11-12 has no `n`, `rep` or `seen`: 8x8, none yet.
+  const BS_SIZES = {
+    full: { n: 8, fleet: [["Yagi", 4], ["Dipole", 3], ["Vertical", 3], ["Whip", 2]] },
+    skirmish: { n: 6, fleet: [["Dipole", 3], ["Vertical", 3], ["Whip", 2]] },
+  };
+  const BS_VOLLEY = 4;
+  const BS_SWEEP_AT = 3;
+  const BS_SALVO_AT = 9;
+  const BS_REPAIR_AFTER = 4;
+  // Signal report: the distance (king's moves) from a miss to the nearest antenna square not yet
+  // hit, capped. S9 = right beside one, S2 = nothing within three.
+  const BS_SCAP = 4;
+  const BS_S = [null, ["S9", "right beside it"], ["S7", "close"], ["S5", "in the area"], ["S2", "nothing nearby"]];
+  const bsN = (b) => b.n || 8;
+  const bsCheb = (N, a, c) => Math.max(Math.abs(Math.floor(a / N) - Math.floor(c / N)), Math.abs(a % N - c % N));
+  function bsEmpty(size) {
+    const S = BS_SIZES[size] || BS_SIZES.full, N = S.n;
+    return { n: N, at: new Array(N * N).fill(-1), ships: S.fleet.map(([name, len]) => ({ name, len, cells: [], hits: 0 })),
+      shot: new Array(N * N).fill(0), rep: [], seen: new Array(N * N).fill(0) };
+  }
+  // Put ship k with its bow at cell i, across (h) or down. False if it would leave the grid or overlap.
+  function bsPut(b, k, i, h) {
+    const N = bsN(b), len = b.ships[k] && b.ships[k].len, r = Math.floor(i / N), c = i % N;
+    if (!len || (h ? c + len > N : r + len > N)) return false;
+    const cells = [];
+    for (let k2 = 0; k2 < len; k2++) cells.push(h ? i + k2 : i + k2 * N);
+    if (cells.some((x) => b.at[x] >= 0 && b.at[x] !== k)) return false;
+    b.ships[k].cells.forEach((x) => { b.at[x] = -1; });
+    cells.forEach((x) => { b.at[x] = k; });
+    b.ships[k].cells = cells;
+    return true;
+  }
+  function bsPlace(rnd, size) {
+    const b = bsEmpty(size), N = b.n;
+    b.ships.forEach((sh, k) => {
+      const len = sh.len;
       for (;;) {
         const h = rnd() < 0.5;
         const r = Math.floor(rnd() * (h ? N : N - len + 1)), c = Math.floor(rnd() * (h ? N - len + 1 : N));
-        const cells = [];
-        for (let k = 0; k < len; k++) cells.push(h ? r * N + c + k : (r + k) * N + c);
-        if (cells.every((i) => at[i] < 0)) { cells.forEach((i) => { at[i] = ships.length; }); ships.push({ name, cells, hits: 0 }); break; }
+        if (bsPut(b, k, r * N + c, h)) break;
       }
-    }
-    return { at, ships, shot: new Array(N * N).fill(0) };
+    });
+    return b;
   }
   const bsSunk = (b, i) => b.at[i] >= 0 && b.ships[b.at[i]].hits === b.ships[b.at[i]].cells.length;
   const bsOver = (b) => b.ships.every((s) => s.hits === s.cells.length);
+  function bsSignal(b, i) {
+    const N = bsN(b);
+    let d = BS_SCAP;
+    for (let j = 0; j < N * N; j++) if (b.at[j] >= 0 && !b.shot[j]) d = Math.min(d, bsCheb(N, i, j));
+    return d;
+  }
   function bsFire(b, i) {
     if (b.shot[i]) return null;
     const s = b.at[i];
-    if (s < 0) { b.shot[i] = 1; return { i, hit: false, sunk: "" }; }
+    if (s < 0) { b.shot[i] = 1; const d = bsSignal(b, i); (b.rep = b.rep || []).push([i, d]); return { i, hit: false, sunk: "", d }; }
     b.shot[i] = 2;
     const sh = b.ships[s];
     sh.hits++;
     return { i, hit: true, sunk: sh.hits === sh.cells.length ? sh.name : "" };
   }
-  // Hunt and target, the standard strong-enough aim: extend a line of unsunk hits from either end,
-  // else try beside a lone hit, else a random cell of one colour of the checkerboard (every ship is
-  // at least two long, so it cannot hide on the other colour). The player's own shots are not
-  // helped by this; it is the enemy's aim, and the simulated player's.
+  // A square the reports (or a sweep) prove empty: inside some miss's reported distance. Public
+  // knowledge — the page shades these on their grid, and the enemy's aim uses the same rule on yours.
+  function bsClear(b, c) {
+    if (b.seen && b.seen[c] === -1) return true;
+    const N = bsN(b);
+    for (const [i, d] of b.rep || []) if (bsCheb(N, i, c) < d) return true;
+    return false;
+  }
+  // Hunt and target, plus the reports: a swept contact first, then extend a line of unsunk hits,
+  // then beside a lone hit, then a square at exactly the last report's distance, then one colour
+  // of the checkerboard — never a square already proven clear. The enemy's aim, and the
+  // simulated player's in the calibration test.
   function bsAim(b, rnd) {
-    const N = BS_N, isOpen = (r, c) => r >= 0 && r < N && c >= 0 && c < N && b.shot[r * N + c] === 2 && !bsSunk(b, r * N + c);
-    const free = (r, c) => r >= 0 && r < N && c >= 0 && c < N && !b.shot[r * N + c];
+    const N = bsN(b), isOpen = (r, c) => r >= 0 && r < N && c >= 0 && c < N && b.shot[r * N + c] === 2 && !bsSunk(b, r * N + c);
+    const free = (r, c) => r >= 0 && r < N && c >= 0 && c < N && !b.shot[r * N + c] && !bsClear(b, r * N + c);
     const any = (a) => a[Math.floor(rnd() * a.length)];
+    const known = [];
+    for (let i = 0; i < N * N; i++) if (!b.shot[i] && b.seen && b.seen[i] === 1) known.push(i);
+    if (known.length) return any(known);
     const line = [], near = [];
     for (let i = 0; i < N * N; i++) {
       const r = Math.floor(i / N), c = i % N;
@@ -1758,10 +1875,81 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }
     if (line.length) return any(line);
     if (near.length) return any(near);
-    const left = [], even = [];
-    for (let i = 0; i < N * N; i++) if (!b.shot[i]) { left.push(i); if ((Math.floor(i / N) + i % N) % 2 === 0) even.push(i); }
-    return any(even.length ? even : left);
+    const last = (b.rep || []).filter((x) => x[1] < BS_SCAP).slice(-1)[0];
+    const ok = [], even = [], ring = [], left = [];
+    for (let i = 0; i < N * N; i++) {
+      if (b.shot[i]) continue;
+      left.push(i);
+      if (bsClear(b, i)) continue;
+      ok.push(i);
+      if ((Math.floor(i / N) + i % N) % 2 === 0) even.push(i);
+      if (last && bsCheb(N, last[0], i) === last[1]) ring.push(i);
+    }
+    return any(ring.length ? ring : even.length ? even : ok.length ? ok : left);
   }
+  // True while no hit is waiting to be followed up — when a sweep or salvo is worth spending.
+  function bsHunting(b) { for (let i = 0; i < bsN(b) ** 2; i++) if (b.shot[i] === 2 && !bsSunk(b, i)) return false; return true; }
+  // DF sweep: the 2x2 block with `i` at its top left (pulled back inside the grid) is revealed
+  // without firing. Returns the four cells.
+  function bsSweep(b, i) {
+    const N = bsN(b), r = Math.min(Math.floor(i / N), N - 2), c = Math.min(i % N, N - 2), at = r * N + c;
+    if (!b.seen) b.seen = new Array(N * N).fill(0);
+    const cells = [at, at + 1, at + N, at + N + 1];
+    cells.forEach((x) => { if (!b.shot[x]) b.seen[x] = b.at[x] >= 0 ? 1 : -1; });
+    return cells;
+  }
+  // Salvo: every square of a row not yet shot and not proven clear. Returns the shots fired.
+  function bsSalvo(b, row) {
+    const N = bsN(b), out = [];
+    for (let c = 0; c < N; c++) { const i = row * N + c; if (!b.shot[i] && !bsClear(b, i)) out.push(bsFire(b, i)); }
+    return out;
+  }
+  // Repair: one hit square of your most-damaged antenna still standing is patched. ⚠ A report made
+  //   while that square was holed now under-reads it, and bsClear would hide it from the enemy for
+  //   good, so every report the patch contradicts is withdrawn.
+  function bsRepair(b) {
+    const live = b.ships.filter((s) => s.hits > 0 && s.hits < s.cells.length).sort((x, y) => y.hits - x.hits);
+    if (!live.length) return null;
+    const s = live[0], i = s.cells.find((x) => b.shot[x] === 2), N = bsN(b);
+    b.shot[i] = 0; s.hits--;
+    b.rep = (b.rep || []).filter(([j, d]) => bsCheb(N, j, i) >= d);
+    return { i, name: s.name };
+  }
+  const bsDamaged = (b) => b.ships.some((s) => s.hits > 0 && s.hits < s.cells.length);
+  // ---- Broadside: the opponents ----
+  // ⚠ Every call starts with Q. The ITU keeps the Q series for Q codes and issues no station a Q
+  //   call, so none of these can be a real operator. Each is named for a Q code or a kind of HF trouble.
+  // ⚠ They all fight IDENTICALLY — the same aim and the same calibrated volley. The rank is the rung
+  //   on a ladder, not a difficulty: a harder opponent would make a win stop meaning "at the pass
+  //   mark". You meet the lowest-ranked one you have not yet beaten, so climbing it takes wins.
+  const BS_OPPS = [
+    { call: "Q2RN", name: "Static", rank: "Ensign" },
+    { call: "Q5SB", name: "Fade", rank: "Lieutenant" },
+    { call: "Q8RM", name: "Splatter", rank: "Lt Commander" },
+    { call: "Q3ES", name: "Sporadic E", rank: "Commander" },
+    { call: "Q7GL", name: "Grey Line", rank: "Captain" },
+    { call: "Q9LP", name: "Long Path", rank: "Commodore" },
+    { call: "Q0BO", name: "Blackout", rank: "Admiral" },
+  ];
+  const bsOpp = (call) => BS_OPPS.find((o) => o.call === call) || BS_OPPS[0];
+  // Your record against one call, summed over the day-keyed maps.
+  function bsVs(g, call) {
+    const sum = (m) => Object.keys(m || {}).reduce((s, k) => s + (k.slice(k.indexOf("|") + 1) === call ? m[k] : 0), 0);
+    return { w: sum(g.bwo), l: sum(g.blo) };
+  }
+  // Derived from the synced record, never stored: the first you have not beaten, else the one you
+  // have the worst record against (ties to the higher rank).
+  function bsNextOpp(g) {
+    const open = BS_OPPS.find((o) => bsVs(g, o.call).w === 0);
+    if (open) return open.call;
+    let best = null, key = Infinity;
+    BS_OPPS.forEach((o, i) => { const r = bsVs(g, o.call), k = (r.w - r.l) * 100 - i; if (k < key) { key = k; best = o; } });
+    return best.call;
+  }
+  const bsBeaten = (g) => BS_OPPS.filter((o) => bsVs(g, o.call).w > 0).length;
+  // Shots are called in the ITU phonetic alphabet — radio flavour, and the exam asks about it.
+  const BS_PHON = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel"];
+  const BS_NUM = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"];
   function dailyQueue(key) {
     const rnd = mulberry32(hash32(P.pool + "|" + key)), gs = GROUPS.slice();
     for (let i = gs.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [gs[i], gs[j]] = [gs[j], gs[i]]; }
@@ -1869,26 +2057,29 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   //   first like the other rounds. The volley is calibrated so that winning means "at the pass mark",
   //   and that only holds if the accuracy inside a battle is the accuracy the exam would see. Every
   //   answer still goes through record(), and a weak question still scores more (valueOf).
-  const bsKey = (pid) => "element-drill.broadside." + pid;
+  // One saved battle per kind, so a Skirmish never overwrites a Broadside half-way through.
+  const bsKey = (pid, cfg) => "element-drill." + (cfg.daily ? "bsdaily." : cfg.size === "skirmish" ? "skirmish." : "broadside.") + pid;
   const bsLeft = (b) => b.ships.filter((x) => x.hits < x.cells.length).length;
   const bsTotal = (m) => Object.values(m).reduce((a, v) => a + v, 0);
-  function bsLoad(pid) {
+  function bsLoad(pid, cfg) {
     try {
-      const b = JSON.parse(localStorage.getItem(bsKey(pid)));
+      const b = JSON.parse(localStorage.getItem(bsKey(pid, cfg)));
       return b && b.v === 1 && b.en && b.me ? b : null;
     } catch (e) { return null; }
   }
   // ⚠ A battle in progress lives in THIS browser only. Synced state must merge commutatively, and a
   //   half-played board has no sensible merge — two devices would each hold a different war. What
-  //   does sync is the result: battles won and lost per day (`bw`/`bl`), merged like every day map.
+  //   does sync is the result: battles won and lost per day (`bw`/`bl`), the same per opponent
+  //   (`bwo`/`blo`), and the daily battle (`bdw`/`bdl`), all merged like every day map.
+  const BS_KEEP = ["opp", "day", "en", "me", "asked", "order", "phase", "choice", "answered", "right", "wrong", "score", "volley", "mine",
+    "streak", "best", "sweeps", "salvos", "used", "pend", "turn", "repairing", "justRepaired", "rr", "rw", "shots", "startedP", "placing", "salvoRes", "swept", "repaired", "earned"];
   function bsSave() {
     if (!run || !run.cfg.battle) return;
-    const keep = { v: 1, en: run.en, me: run.me, asked: run.asked, qid: run.queue[0].id, order: run.order, phase: run.phase,
-      choice: run.choice, answered: run.answered, right: run.right, wrong: run.wrong, score: run.score, missed: run.missed.map((it) => it.id),
-      volley: run.volley, mine: run.mine };
-    try { localStorage.setItem(bsKey(run.pool), JSON.stringify(keep)); } catch (e) { /* private mode */ }
+    const keep = { v: 1, qid: run.queue[0] ? run.queue[0].id : null, missed: run.missed.map((it) => it.id) };
+    for (const k of BS_KEEP) keep[k] = run[k];
+    try { localStorage.setItem(bsKey(run.pool, run.cfg), JSON.stringify(keep)); } catch (e) { /* private mode */ }
   }
-  function bsClear(pid) { try { localStorage.removeItem(bsKey(pid)); } catch (e) { /* private mode */ } }
+  function bsForget(pid, cfg) { try { localStorage.removeItem(bsKey(pid, cfg)); } catch (e) { /* private mode */ } }
   function bsDraw(asked) {
     const seen = new Set(asked);
     for (let t = 0; t < 50; t++) {
@@ -1898,145 +2089,498 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     }
     return ORDER[Math.floor(Math.random() * ORDER.length)];
   }
+  // The next question: a REPAIR question when a miss from BS_REPAIR_AFTER turns ago is due and you
+  // have a hole to patch (at most one between two ordinary questions; with nothing to patch the
+  // chance is dropped), else an ordinary one drawn like the exam. ⚠ The calibration test copies
+  // these rules (bsSim in test_merge.js) — change one, change both.
   function bsAsk() {
-    const it = bsDraw(run.asked);
-    run.asked.push(it.id);
+    let it = null;
+    run.repairing = false;
+    if (!run.justRepaired && run.pend.length && run.pend[0].due <= run.turn + 1) {
+      const p = run.pend.shift();
+      if (bsDamaged(run.me) && Q.get(p.id)) { it = Q.get(p.id); run.repairing = true; }
+    }
+    run.justRepaired = run.repairing;
+    if (!it) { it = bsDraw(run.asked); run.asked.push(it.id); run.turn++; }
     run.queue = [it]; run.i = 0;
     run.answered = false; run.choice = null; run.gain = 0; run.order = shuffle([0, 1, 2, 3]);
-    run.phase = "ask"; run.volley = []; run.mine = null;
+    run.phase = "ask"; run.volley = []; run.mine = null; run.landed = 0; run.anim++;
+    run.salvoRes = null; run.swept = null; run.repaired = null; run.tool = "shot"; run.earned = []; run.note = "";
   }
-  function startBattle(fresh) {
+  // Each enemy antenna stands for one of your weakest groups (ties broken at random). A NAME, not a
+  // mechanic: drawing the questions from those groups would make the battle harder than the exam and
+  // a win would stop meaning "you would pass". The report sends you to drill them.
+  function bsWeakGroups(k) {
+    return shuffle(GROUPS.map((g) => g.id)).sort((a, b) => groupP(a) - groupP(b)).slice(0, k);
+  }
+  const bsGroupName = (g) => { const t = GTITLE[g] || ""; return g + " · " + (t.length > 34 ? t.slice(0, 32) + "…" : t); };
+  // The daily battle: their fleet is placed by the date alone, so it is the same board on every
+  // device; one counted try a day. Stored as 1000 − shots so the usual larger-wins merge keeps the
+  // fewest shots if two devices both fought it.
+  const bsDailySeed = (day) => hash32("broadside-daily|" + day);
+  const bsDailyOpp = (day) => BS_OPPS[bsDailySeed(day) % BS_OPPS.length].call;
+  const bsDailyDone = (g, day) => g.bdw[day] !== undefined || g.bdl[day] !== undefined;
+  const bsDailyShots = (g, day) => g.bdw[day] !== undefined ? 1000 - g.bdw[day] : null;
+  const fmtDay = (day) => { const d = new Date(day + "T12:00:00"); return d.getDate() + " " + d.toLocaleString("en", { month: "short" }); };
+
+  // ---- Broadside: sound, buzz and the banners — presentation only, nothing here is saved ----
+  // ⚠ Audio needs a user gesture to start on iOS, so unlock() runs inside every tap and key press
+  //   of a battle; after that, the volley's timed shots can play. Haptics: navigator.vibrate where it
+  //   exists (Android). iOS Safari has no vibrate; ticking a native switch control gives one haptic
+  //   tick on iOS 18+, and in practice only inside a tap — so on an iPhone your own sinking shot
+  //   buzzes and their timed volley may not. One toggle covers sound and buzz, per device.
+  const fx = (() => {
+    const KEY = "element-drill.sound";
+    let ctx = null;
+    const on = () => ls.get(KEY) !== "off";
+    function unlock() {
+      if (!on()) return;
+      try {
+        if (!ctx) { const A = window.AudioContext || window.webkitAudioContext; if (A) ctx = new A(); }
+        if (ctx && ctx.state === "suspended") ctx.resume();
+      } catch (e) { ctx = null; }
+    }
+    function env(g, t, vol, dur) {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    }
+    function tone(f0, f1, dur, type, vol, delay) {
+      if (!ctx || !on()) return;
+      try {
+        const t = ctx.currentTime + (delay || 0), o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+        env(g, t, vol, dur); o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + 0.05);
+      } catch (e) { /* audio is decoration */ }
+    }
+    function noise(dur, vol, hz, delay) {
+      if (!ctx || !on()) return;
+      try {
+        const t = ctx.currentTime + (delay || 0), n = Math.ceil(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        s.buffer = buf; f.type = "lowpass"; f.frequency.value = hz;
+        env(g, t, vol, dur); s.connect(f); f.connect(g); g.connect(ctx.destination); s.start(t); s.stop(t + dur + 0.05);
+      } catch (e) { /* audio is decoration */ }
+    }
+    const play = {
+      miss: (dl) => noise(0.28, 0.10, 700, dl),
+      hit: (dl) => { tone(170, 45, 0.3, "sine", 0.4, dl); noise(0.14, 0.14, 2600, dl); },
+      won: (dl) => { [523, 659, 784].forEach((f, k) => tone(f, f, k === 2 ? 0.34 : 0.13, "triangle", 0.2, (dl || 0) + 0.13 * k)); noise(0.35, 0.12, 1500, dl); },
+      lost: (dl) => { tone(260, 70, 0.75, "sawtooth", 0.09, dl); noise(0.6, 0.2, 500, dl); },
+      ping: () => { tone(1200, 1180, 0.09, "sine", 0.18); tone(1200, 1180, 0.09, "sine", 0.12, 0.22); },
+      perk: () => { tone(660, 660, 0.08, "square", 0.08); tone(990, 990, 0.14, "square", 0.08, 0.09); },
+      fix: () => { tone(330, 660, 0.25, "triangle", 0.18); },
+    };
+    function buzz(pattern) {
+      if (!on()) return;
+      try { if (navigator.vibrate) { navigator.vibrate(pattern); return; } } catch (e) { /* none */ }
+      try {
+        const l = document.createElement("label"), i = document.createElement("input");
+        i.type = "checkbox"; i.setAttribute("switch", ""); i.tabIndex = -1; l.appendChild(i);
+        l.style.cssText = "position:fixed;left:-200px;top:0;opacity:0;pointer-events:none";
+        document.body.appendChild(l); l.click(); l.remove();
+      } catch (e) { /* no haptics here */ }
+    }
+    function banner(text, sub, cls) {
+      const d = document.createElement("div");
+      d.className = "bs-banner" + (cls ? " " + cls : ""); d.setAttribute("aria-hidden", "true");
+      d.innerHTML = esc(text) + (sub ? "<small>" + esc(sub) + "</small>" : "");
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 1800);
+    }
+    // One shot's worth of drama. `atThem` is your shot at their grid; `sub` is the banner's small line.
+    // Short on purpose: the banner is one line at phone width, and "Vertical" is the longest name.
+    function shot(r, atThem, sub, quiet) {
+      if (r.sunk) {
+        banner(r.sunk + " down", sub, atThem ? "" : "lost");
+        if (!quiet) { (atThem ? play.won : play.lost)(); buzz(atThem ? [40, 50, 40, 50, 120] : [260]); }
+      } else if (!quiet) { (r.hit ? play.hit : play.miss)(); if (r.hit) buzz(30); }
+    }
+    function salvo(res) { res.forEach((r, k) => (r.hit ? play.hit : play.miss)(0.16 * k)); if (res.some((r) => r.hit)) buzz([30, 40, 30]); }
+    return { unlock, shot, salvo, banner, buzz, play, on, toggle: () => { ls.set(KEY, on() ? "off" : null); if (on()) unlock(); } };
+  })();
+
+  function startBattle(fresh, mode) {
+    if (!MODES[mode] || !MODES[mode].battle) mode = "broadside";
+    const cfg = MODES[mode], today = dayKey(Date.now());
     stopRun();
-    const saved = fresh ? null : bsLoad(P.pool);
-    run = { mode: "broadside", cfg: MODES.broadside, pool: P.pool, queue: [], i: 0, score: 0, combo: 0, bestCombo: 0,
-      right: 0, wrong: 0, missed: [], done: false, gain: 0, endsAt: 0, startedP: passProb(), asked: [] };
-    if (saved && Q.get(saved.qid)) {
-      Object.assign(run, saved, { queue: [Q.get(saved.qid)], missed: saved.missed.map((id) => Q.get(id)).filter(Boolean) });
+    const saved = fresh ? null : bsLoad(P.pool, cfg);
+    if (cfg.daily && !saved && bsDailyDone(state.game, today)) { run = null; renderGame(); return; }
+    run = { mode, cfg, pool: P.pool, queue: [], i: 0, score: 0, combo: 0, bestCombo: 0, right: 0, wrong: 0, missed: [], done: false, gain: 0,
+      endsAt: 0, startedP: passProb(), asked: [], opp: cfg.daily ? bsDailyOpp(today) : bsNextOpp(state.game), day: cfg.daily ? today : "",
+      streak: 0, best: 0, sweeps: 0, salvos: 0, used: { sweep: 0, salvo: 0 }, pend: [], turn: 0, repairing: false, justRepaired: false,
+      rr: 0, rw: 0, shots: 0, tool: "shot", anim: 0, landed: 0, volley: [], mine: null, salvoRes: null, swept: null, repaired: null,
+      placing: null, earned: [], note: "" };
+    if (saved && (saved.phase === "place" || Q.get(saved.qid))) {
+      Object.assign(run, saved, { queue: saved.qid && Q.get(saved.qid) ? [Q.get(saved.qid)] : [], missed: saved.missed.map((id) => Q.get(id)).filter(Boolean) });
       delete run.qid; delete run.v;
+      // A battle saved before opponents existed fights whoever is next on the ladder.
+      if (!BS_OPPS.some((o) => o.call === run.opp)) run.opp = bsNextOpp(state.game);
+      run.volley = run.volley || []; run.landed = run.volley.length; run.anim = 0; run.tool = "shot";
       // Saved mid-pause after a shot: the timer that would have moved on did not survive the reload.
       if (run.phase === "fired") { if (bsOver(run.en)) { finishBattle(true); return; } bsAsk(); }
     } else {
-      run.en = bsPlace(Math.random); run.me = bsPlace(Math.random);
-      bsAsk();
+      run.en = cfg.daily ? bsPlace(mulberry32(bsDailySeed(today)), cfg.size) : bsPlace(Math.random, cfg.size);
+      shuffle(bsWeakGroups(run.en.ships.length)).forEach((g, k) => { run.en.ships[k].g = g; });
+      run.me = bsPlace(Math.random, cfg.size);
+      run.phase = "place";
     }
     bsSave(); renderGame();
   }
+  // ---- placing your own antennas (fresh battles start here) ----
+  function battlePlace(i) {
+    const pl = run.placing;
+    if (!pl || pl.k >= run.me.ships.length) return;
+    if (bsPut(run.me, pl.k, i, pl.h)) { pl.k++; fx.unlock(); fx.play.perk(); }
+    else run.note = "It doesn't fit there — try another square, or turn it.";
+    bsSave(); renderGame();
+  }
+  function placeAction(a) {
+    const size = run.cfg.size;
+    run.note = "";
+    if (a === "bs-place-shuffle") { run.me = bsPlace(Math.random, size); run.placing = null; }
+    else if (a === "bs-place-manual") { run.me = bsEmpty(size); run.placing = { k: 0, h: true }; }
+    else if (a === "bs-place-rotate" && run.placing) run.placing.h = !run.placing.h;
+    else if (a === "bs-place-undo" && run.placing && run.placing.k > 0) {
+      const k = --run.placing.k;
+      run.me.ships[k].cells.forEach((x) => { run.me.at[x] = -1; }); run.me.ships[k].cells = [];
+    } else if (a === "bs-place-start") {
+      if (run.placing && run.placing.k < run.me.ships.length) return;
+      fx.unlock(); bsAsk();
+    }
+    bsSave(); renderGame();
+  }
+  function bsCredit(gain) {
+    // Credited as earned, not at the end: a battle can span days, and the streak reads these keys.
+    const g = state.game, k = dayKey(Date.now());
+    g.xpd[k] = (g.xpd[k] || 0) + gain;
+    touch();
+  }
   function battleAnswer(pos) {
+    fx.unlock();
     const it = run.queue[0], ok = run.order[pos] === it.c;
     record(it.id, ok);
     run.answered = true; run.choice = pos;
+    if (run.repairing) {
+      // A repair question is a bonus: right patches a hole, wrong costs nothing. It is NOT counted in
+      // the battle's right/wrong, which stays the exam-like accuracy the report compares to 74%.
+      if (ok) { run.rr++; run.gain = valueOf(it.id); run.score += run.gain; bsCredit(run.gain); run.repaired = bsRepair(run.me); }
+      else { run.rw++; run.gain = 0; run.repaired = null; }
+      run.phase = "repaired";
+      bsSave(); renderGame();
+      if (run.repaired) { fx.play.fix(); fx.buzz(30); }
+      const e = $("#bs-mine"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      return;
+    }
     if (ok) {
-      run.right++;
-      run.gain = valueOf(it.id);
-      run.score += run.gain;
-      // Credited as earned, not at the end: a battle can span days, and the streak reads these keys.
-      const g = state.game, k = dayKey(Date.now());
-      g.xpd[k] = (g.xpd[k] || 0) + run.gain;
-      touch();
+      run.right++; run.streak++; run.best = Math.max(run.best, run.streak);
+      run.gain = valueOf(it.id); run.score += run.gain; bsCredit(run.gain);
+      run.earned = [];
+      if (run.streak % BS_SWEEP_AT === 0) { run.sweeps++; run.earned.push("sweep"); }
+      if (run.streak % BS_SALVO_AT === 0) { run.salvos++; run.earned.push("salvo"); }
       run.phase = "aim";
     } else {
-      run.wrong++; run.gain = 0; run.missed.push(it);
+      run.wrong++; run.gain = 0; run.missed.push(it); run.streak = 0;
+      run.pend.push({ id: it.id, due: run.turn + BS_REPAIR_AFTER });
+      // Fired now and saved now, so a reload cannot dodge it; only the SHOWING is paced, below.
       run.volley = [];
       for (let v = 0; v < BS_VOLLEY && !bsOver(run.me); v++) run.volley.push(bsFire(run.me, bsAim(run.me, Math.random)));
-      run.phase = "incoming";
+      run.phase = "incoming"; run.landed = 0;
     }
     bsSave(); renderGame();
-    if (ok) { const e = $("#bs-enemy"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    if (ok) {
+      const e = $("#bs-theirs"); if (e && e.scrollIntoView) e.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      if (run.earned.length) {
+        fx.play.perk(); fx.buzz([20, 40, 20]);
+        fx.banner(run.earned.map((x) => (x === "sweep" ? "DF sweep" : "Salvo")).join(" + "), run.streak + " in a row", "perk");
+      }
+    } else bsIncoming();
   }
-  function battleFire(i) {
-    if (!run || run.phase !== "aim" || run.en.shot[i]) return;
-    run.mine = bsFire(run.en, i);
+  // Their volley lands one shot at a time on YOUR grid, which is moved up under the question for it.
+  function bsIncoming() {
+    const id = ++run.anim;
+    const side = $("#bs-mine");
+    if (side && side.scrollIntoView) side.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const step = () => {
+      if (!run || run.done || run.anim !== id || run.phase !== "incoming" || run.landed >= run.volley.length) return;
+      const r = run.volley[run.landed++];
+      renderGame();
+      fx.shot(r, false, "yours · " + bsLeft(bsShown(run.me)) + " left");
+      if (run.landed < run.volley.length) setTimeout(step, r.sunk ? 1500 : 800);
+    };
+    setTimeout(step, 600);
+  }
+  // The banner line for one of THEIR antennas: the weak group it stood for.
+  function bsTheirSub(name) {
+    const s = run.en.ships.find((x) => x.name === name);
+    return s && s.g ? "you sank " + bsGroupName(s.g) : bsOpp(run.opp).call + " · " + bsLeft(run.en) + " left";
+  }
+  function battleTap(i) {
+    if (!run || run.done) return;
+    if (run.phase === "place") return battlePlace(i);
+    if (run.phase !== "aim") return;
+    fx.unlock();
+    run.note = "";
+    const N = bsN(run.en);
+    if (run.tool === "sweep") {
+      run.swept = bsSweep(run.en, i); run.sweeps--; run.used.sweep++; run.tool = "shot"; run.salvoRes = null;
+      bsSave(); renderGame(); fx.play.ping();
+      return;
+    }
+    if (run.tool === "salvo") {
+      const row = Math.floor(i / N), res = bsSalvo(run.en, row);
+      if (!res.length) { run.note = "Nothing left to hit on that row."; renderGame(); return; }
+      run.salvos--; run.used.salvo++; run.tool = "shot"; run.shots += res.length; run.salvoRes = { row, res }; run.swept = null;
+      const down = res.filter((r) => r.sunk);
+      if (bsOver(run.en)) { run.phase = "fired"; run.mine = null; }
+      bsSave(); renderGame(); fx.salvo(res);
+      if (down.length) setTimeout(() => fx.shot(down[down.length - 1], true, bsTheirSub(down[down.length - 1].sunk)), 0.16 * res.length * 1000);
+      if (run.phase === "fired") setTimeout(() => { if (run && !run.done && bsOver(run.en)) finishBattle(true); }, 2200);
+      return;
+    }
+    if (run.en.shot[i]) return;
+    run.mine = bsFire(run.en, i); run.shots++;
     run.phase = "fired";
     bsSave(); renderGame();
+    fx.shot(run.mine, true, run.mine.sunk ? bsTheirSub(run.mine.sunk) : "");
     setTimeout(() => {
       if (!run || run.done || run.phase !== "fired") return;
       if (bsOver(run.en)) return finishBattle(true);
       bsAsk(); bsSave(); renderGame();
-    }, run.mine.sunk ? 1500 : 850);
+    }, run.mine.sunk ? 1800 : run.mine.hit ? 850 : 1300);
   }
   function battleContinue() {
-    if (!run || run.phase !== "incoming") return;
+    if (!run || run.done) return;
+    if (run.phase === "repaired") { bsAsk(); bsSave(); renderGame(); return; }
+    if (run.phase !== "incoming") return;
+    fx.unlock();
+    // First press during the volley skips the show (a sinking still gets its banner); the next moves on.
+    if (run.landed < run.volley.length) {
+      const rest = run.volley.slice(run.landed);
+      run.landed = run.volley.length; run.anim++;
+      renderGame();
+      const s = rest.filter((r) => r.sunk).pop();
+      if (s) fx.shot(s, false, "yours · " + bsLeft(run.me) + " left", true);
+      return;
+    }
     if (bsOver(run.me)) return finishBattle(false);
     bsAsk(); bsSave(); renderGame();
   }
   function finishBattle(won) {
     if (!run || run.done) return;
     run.done = true; run.won = won;
-    const g = state.game, k = dayKey(Date.now()), m = won ? g.bw : g.bl;
+    const g = state.game, k = dayKey(Date.now()), m = won ? g.bw : g.bl, mo = won ? g.bwo : g.blo, ko = k + "|" + run.opp;
     m[k] = (m[k] || 0) + 1;
+    mo[ko] = (mo[ko] || 0) + 1;
     g.runs[k] = (g.runs[k] || 0) + 1;
-    touch(); bsClear(run.pool); renderGame();
+    // The daily result goes under the day the board belongs to, even if it was finished after midnight.
+    if (run.cfg.daily && run.day) {
+      if (won) g.bdw[run.day] = Math.max(g.bdw[run.day] || 0, 1000 - run.shots);
+      else g.bdl[run.day] = 1;
+    }
+    touch(); bsForget(run.pool, run.cfg); renderGame();
+    if (won) fx.play.won(0.2); else fx.play.lost(0.2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function bsShareText(day, call, shots, pct) {
+    const o = bsOpp(call);
+    return "Element Drill · Daily battle " + fmtDay(day) + ": " + (shots != null ? "sank " + o.call + " " + o.name + " in " + shots + " shots" : o.call + " " + o.name + " won") +
+      (pct != null ? ", " + pct + "% right" : "") + ".";
+  }
+  async function bsShare(text) {
+    try { if (navigator.share) { await navigator.share({ text }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(text); fx.banner("Copied", "paste it anywhere", "perk"); }
+    catch (e) { window.prompt("Copy this:", text); }
   }
   const COLS = "ABCDEFGH";
-  const bsName = (i) => COLS[Math.floor(i / BS_N)] + (i % BS_N + 1);
-  // `reveal` shows ships (always on your own board, and on theirs once the battle is over).
+  const bsName = (b, i) => COLS[Math.floor(i / bsN(b))] + (i % bsN(b) + 1);
+  const bsCall = (b, i) => BS_PHON[Math.floor(i / bsN(b))] + " " + BS_NUM[i % bsN(b)];
+  const bsS = (d) => BS_S[Math.min(Math.max(d || BS_SCAP, 1), BS_SCAP)];
+  // Your board as it should LOOK mid-volley: shots not yet landed are hidden, and a ship's hits are
+  // recounted so it does not show as sunk before the shot that sinks it arrives.
+  function bsShown(b) {
+    if (run.phase !== "incoming" || run.landed >= run.volley.length) return b;
+    const hide = new Set(run.volley.slice(run.landed).map((r) => r.i));
+    const shot = b.shot.map((v, i) => (hide.has(i) ? 0 : v));
+    return { ...b, shot, rep: (b.rep || []).filter(([i]) => !hide.has(i)), ships: b.ships.map((s) => ({ ...s, hits: s.cells.filter((i) => shot[i] === 2).length })) };
+  }
+  // `reveal` shows ships (always on your own board, and on theirs once the battle is over); `tap`
+  // makes every square answer a tap, `armed` only the unshot ones; `hints` shades the squares the
+  // signal reports prove clear and marks swept contacts.
   function bsGridHTML(b, opts) {
-    const fresh = new Set((opts.fresh || []).map((r) => r.i));
-    let h = '<div class="bs-grid' + (opts.armed ? " armed" : "") + '"' + (opts.id ? ' id="' + opts.id + '"' : "") + ">";
-    for (let i = 0; i < BS_N * BS_N; i++) {
-      let cls = "bs-cell";
+    const fresh = new Set((opts.fresh || []).map((r) => r.i)), N = bsN(b), mark = new Set(opts.mark || []);
+    const rep = new Map((b.rep || []).map(([i, d]) => [i, d]));
+    let h = '<div class="bs-grid' + (opts.tap ? " tapall" : opts.armed ? " armed" : "") + '" style="--bs-n:' + N + '"' + (opts.id ? ' id="' + opts.id + '"' : "") + ">";
+    for (let i = 0; i < N * N; i++) {
+      let cls = "bs-cell", txt = "";
       const sunk = bsSunk(b, i);
-      if (b.shot[i] === 1) cls += " miss";
+      if (b.shot[i] === 1) { cls += " miss"; if (rep.has(i)) { const d = rep.get(i); cls += " rep d" + d; txt = bsS(d)[0].slice(1); } }
       else if (b.shot[i] === 2) cls += sunk ? " sunk" : " hit";
       else if (opts.reveal && b.at[i] >= 0) cls += " ship";
+      else if (opts.hints && b.seen && b.seen[i] === 1) cls += " contact";
+      else if (opts.hints && bsClear(b, i)) cls += " clear";
       if (fresh.has(i)) cls += " new";
-      const label = bsName(i) + (b.shot[i] === 1 ? " miss" : b.shot[i] === 2 ? (sunk ? " sunk" : " hit") : "");
-      h += '<button type="button" class="' + cls + '"' + (opts.armed && !b.shot[i] ? ' data-cell="' + i + '"' : " disabled") +
-        ' aria-label="' + label + '" title="' + label + '"></button>';
+      if (mark.has(i)) cls += " swept";
+      if (opts.land === i) cls += " land";
+      const label = bsName(b, i) + (b.shot[i] === 1 ? " miss" + (rep.has(i) ? " " + bsS(rep.get(i))[0] : "") : b.shot[i] === 2 ? (sunk ? " sunk" : " hit") : "");
+      const tappable = opts.tap || (opts.armed && !b.shot[i]);
+      h += '<button type="button" class="' + cls + '"' + (tappable ? ' data-cell="' + i + '"' : " disabled") +
+        ' aria-label="' + label + '" title="' + label + '">' + txt + "</button>";
     }
     return h + "</div>";
   }
-  const bsFleetHTML = (b) => '<div class="bs-fleet">' + b.ships.map((x) => {
-    const t = esc(x.name) + " " + x.cells.length;
-    return x.hits === x.cells.length ? "<s>" + t + "</s>" : "<span>" + t + "</span>";
+  const bsFleetHTML = (b, just, groups) => '<div class="bs-fleet">' + b.ships.map((x) => {
+    const t = esc(x.name) + " " + (x.len || x.cells.length) + (groups && x.g ? " · " + esc(x.g) : "");
+    return x.cells.length && x.hits === x.cells.length ? "<s" + (just === x.name ? ' class="just"' : "") + ">" + t + "</s>" : "<span>" + t + "</span>";
   }).join("") + "</div>";
   function bsBoardsHTML(reveal) {
-    const armed = run.phase === "aim" && !run.done;
-    return '<div class="bs-boards"><div class="bs-side"><span class="bs-title">Their antennas · ' + bsLeft(run.en) + " of " + run.en.ships.length + " standing</span>" +
-      bsGridHTML(run.en, { armed, reveal, id: "bs-enemy", fresh: run.mine && run.phase === "fired" ? [run.mine] : [] }) + bsFleetHTML(run.en) + "</div>" +
-      '<div class="bs-side mine"><span class="bs-title">Yours · ' + bsLeft(run.me) + " of " + run.me.ships.length + " standing</span>" +
-      bsGridHTML(run.me, { reveal: true, fresh: run.phase === "incoming" ? run.volley : [] }) + bsFleetHTML(run.me) + "</div></div>";
+    const armed = run.phase === "aim" && !run.done, inc = run.phase === "incoming" && !run.done, o = bsOpp(run.opp);
+    const fired = run.phase === "fired" && run.mine && !run.done ? run.mine : null;
+    const salvo = run.salvoRes && !run.done ? run.salvoRes.res : [];
+    const tapAll = armed && run.tool !== "shot";
+    const theirs = '<div class="bs-side" id="bs-theirs"><span class="bs-title">' + esc(o.call) + " · " + bsLeft(run.en) + " of " + run.en.ships.length + " standing</span>" +
+      bsGridHTML(run.en, { armed, tap: tapAll, reveal, hints: !run.done, id: "bs-enemy", fresh: fired ? [fired] : salvo, land: fired ? fired.i : -1, mark: run.swept || [] }) +
+      bsFleetHTML(run.en, fired && fired.sunk, true) + "</div>";
+    const me = bsShown(run.me), landed = inc ? run.volley.slice(0, run.landed) : [], last = landed[landed.length - 1];
+    let ticker = "";
+    if (inc) {
+      ticker = '<p class="bs-ticker" aria-live="polite">' + (landed.length ? landed.map((r) =>
+        esc(bsCall(run.me, r.i)) + " — " + (r.sunk ? '<span class="down">' + esc(r.sunk) + " down</span>" : r.hit ? '<span class="hit">hit</span>' : "miss " + bsS(r.d)[0])).join(" · ")
+        : esc(o.call) + " returns fire…") + "</p>";
+    }
+    const placing = run.phase === "place" && run.placing && run.placing.k < run.me.ships.length;
+    const patched = run.phase === "repaired" && run.repaired ? [run.repaired.i] : [];
+    const mine = '<div class="bs-side mine" id="bs-mine"><span class="bs-title">Yours · ' + (run.phase === "place" ? "placing" : bsLeft(me) + " of " + me.ships.length + " standing") + "</span>" + ticker +
+      bsGridHTML(me, { reveal: true, tap: placing, fresh: landed, land: last ? last.i : -1, mark: patched }) + bsFleetHTML(me, last && last.sunk) + "</div>";
+    if (run.phase === "place") return '<div class="bs-boards">' + mine + "</div>";
+    return '<div class="bs-boards">' + (inc || run.phase === "repaired" ? mine + theirs : theirs + mine) + "</div>";
+  }
+  function bsOppHTML() {
+    const o = bsOpp(run.opp), r = bsVs(state.game, o.call);
+    return '<p class="bs-opp"><span>' + (run.cfg.daily ? "daily · " + fmtDay(run.day) + " · vs" : "vs") + "</span><b>" + esc(o.call) + "</b><span>" + esc(o.rank + " " + o.name) + "</span>" +
+      "<span>" + (r.w + r.l ? "you " + r.w + "–" + r.l : "first meeting") + "</span></p>";
+  }
+  function bsPlaceHTML() {
+    const pl = run.placing, n = run.me.ships.length, o = bsOpp(run.opp);
+    let msg;
+    if (!pl) msg = "Your antennas, placed at random. Start with them, shuffle, or place them yourself.";
+    else if (pl.k < n) { const s = run.me.ships[pl.k]; msg = "Tap the first square for your " + s.name + " (" + s.len + " long, " + (pl.h ? "across" : "down") + ")."; }
+    else msg = "All placed. Start when ready.";
+    let h = '<div class="view">' + bsOppHTML() + '<p class="bs-status" role="status">' + esc(msg) + "</p>" +
+      (run.note ? '<p class="bs-note">' + esc(run.note) + "</p>" : "") + bsBoardsHTML(false);
+    h += '<div class="exam-nav"><button type="button" class="btn" data-game="bs-place-start"' + (pl && pl.k < n ? " disabled" : "") + ">Start vs " + esc(o.call) + "</button>" +
+      (pl ? '<button type="button" class="btn ghost" data-game="bs-place-rotate">Turn: ' + (pl.h ? "across" : "down") + "</button>" +
+        '<button type="button" class="btn ghost" data-game="bs-place-undo"' + (pl.k ? "" : " disabled") + ">Undo</button>"
+        : '<button type="button" class="btn ghost" data-game="bs-place-manual">Place them myself</button>') +
+      '<button type="button" class="btn ghost" data-game="bs-place-shuffle">Shuffle</button>' +
+      '<span class="spacer"></span><button type="button" class="btn ghost" data-game="bs-leave">Leave</button></div>';
+    return h + "</div>";
+  }
+  function bsToolsHTML() {
+    if (run.phase !== "aim" || !(run.sweeps || run.salvos)) return "";
+    const b = (t, label, n) => '<button type="button" class="btn ghost bs-tool" data-game="bs-tool-' + t + '" aria-pressed="' + (run.tool === t) + '"' + (n === 0 ? " disabled" : "") + ">" + label + "</button>";
+    const hint = run.tool === "sweep" ? "Tap the top-left square of a 2×2 block to listen there. It does not use your shot."
+      : run.tool === "salvo" ? "Tap any square to fire its whole row — squares already ruled out are skipped. Your shot stays."
+      : "Perks don't use your shot. Pick one, then tap their grid.";
+    return '<div class="bs-tools">' + b("shot", "Shot", 1) + b("sweep", "DF sweep ×" + run.sweeps, run.sweeps) + b("salvo", "Salvo ×" + run.salvos, run.salvos) +
+      '<span class="bs-hint">' + esc(hint) + "</span></div>";
   }
   function battleHTML() {
+    if (run.phase === "place") return bsPlaceHTML();
     let msg = "", cls = "";
-    if (run.phase === "ask") msg = "Answer right to earn a shot. A wrong answer gives them " + BS_VOLLEY + ".";
-    else if (run.phase === "aim") { msg = "Right" + (run.gain ? " (+" + run.gain + ")" : "") + " — pick a square on their grid."; cls = "ok"; }
-    else if (run.phase === "fired") {
+    const o = bsOpp(run.opp);
+    if (run.phase === "ask") {
+      msg = run.repairing ? "Repair chance — you missed this one earlier. Right patches a hole in your fleet; wrong costs nothing."
+        : "Answer right to earn a shot. A wrong answer gives " + o.call + " " + ["", "one", "two", "three", "four", "five"][BS_VOLLEY] + ".";
+      if (run.repairing) cls = "fix";
+    } else if (run.phase === "aim") {
+      cls = "ok";
+      if (run.salvoRes) {
+        const res = run.salvoRes.res, hits = res.filter((r) => r.hit).length, down = res.filter((r) => r.sunk).map((r) => r.sunk);
+        msg = "Salvo on row " + BS_PHON[run.salvoRes.row] + ": " + res.length + (res.length === 1 ? " shot, " : " shots, ") + (hits ? hits + (hits === 1 ? " hit" : " hits") : "no hits") + (down.length ? " — " + down.join(" and ") + " down!" : ".") + " Now take your shot.";
+      } else if (run.swept) {
+        const c = run.swept.filter((i) => run.en.seen[i] === 1 && !run.en.shot[i]).length;
+        msg = "DF sweep: " + (c ? c + " contact" + (c > 1 ? "s" : "") + " — marked ◆." : "nothing there — shaded clear.") + " Now take your shot.";
+      } else {
+        msg = "Right" + (run.gain ? " (+" + run.gain + ")" : "") + (run.earned.length ? " — " + run.streak + " in a row earns a " + run.earned.map((x) => (x === "sweep" ? "DF sweep" : "salvo")).join(" and a ") : "") +
+          " — pick a square on " + o.call + "'s grid.";
+      }
+    } else if (run.phase === "fired") {
       const r = run.mine;
-      msg = bsName(r.i) + ": " + (r.sunk ? "hit — their " + r.sunk + " is down!" : r.hit ? "hit!" : "miss.");
-      cls = r.hit ? "ok" : "";
+      if (!r) { msg = "Salvo — their last antenna is down!"; cls = "ok"; }
+      else {
+        msg = bsCall(run.en, r.i) + ": " + (r.sunk ? "hit — their " + r.sunk + " is down!" : r.hit ? "hit!" : "miss — " + bsS(r.d).join(", ") + ".");
+        cls = r.hit ? "ok" : "";
+      }
     } else if (run.phase === "incoming") {
-      const hits = run.volley.filter((r) => r.hit).length, down = run.volley.filter((r) => r.sunk).map((r) => r.sunk);
-      msg = "Wrong — they fire " + run.volley.length + ": " + run.volley.map((r) => bsName(r.i) + " " + (r.hit ? "hit" : "miss")).join(", ") +
-        (down.length ? ". Your " + down.join(" and ") + " " + (down.length > 1 ? "are" : "is") + " down." : hits ? "." : ". All missed.");
       cls = "no";
+      if (run.landed < run.volley.length) msg = "Wrong — " + o.call + " fires " + run.volley.length + ".";
+      else {
+        const hits = run.volley.filter((r) => r.hit).length, down = run.volley.filter((r) => r.sunk).map((r) => r.sunk);
+        msg = "Wrong — " + (down.length ? "your " + down.join(" and ") + " " + (down.length > 1 ? "are" : "is") + " down."
+          : hits ? hits + " of " + run.volley.length + " hit." : "all " + run.volley.length + " missed.") + " This one comes back later as a repair chance.";
+      }
+    } else if (run.phase === "repaired") {
+      if (run.repaired) { msg = "Repaired — your " + run.repaired.name + " at " + bsCall(run.me, run.repaired.i) + " is patched."; cls = "ok"; }
+      else { msg = "Not this time — no patch, and no harm done."; cls = "no"; }
     }
+    const toSweep = BS_SWEEP_AT - run.streak % BS_SWEEP_AT, toSalvo = BS_SALVO_AT - run.streak % BS_SALVO_AT;
     let h = '<div class="view"><div class="hud"><span class="sc">' + run.score.toLocaleString() + "</span>" +
-      "<span>" + run.right + " right · " + run.wrong + " wrong" + (run.right + run.wrong ? " · " + Math.round(100 * run.right / (run.right + run.wrong)) + "%" : "") + "</span></div>";
+      "<span>" + run.right + " right · " + run.wrong + " wrong" + (run.right + run.wrong ? " · " + Math.round(100 * run.right / (run.right + run.wrong)) + "%" : "") + "</span>" +
+      '<span class="bs-streak">' + run.streak + " in a row · " + (toSalvo === toSweep ? "sweep + salvo" : "sweep") + " in " + toSweep +
+      (run.sweeps || run.salvos ? " · held: " + [run.sweeps ? run.sweeps + " sweep" : "", run.salvos ? run.salvos + " salvo" : ""].filter(Boolean).join(", ") : "") + "</span></div>";
+    h += bsOppHTML();
     h += '<p class="bs-status ' + cls + '" role="status">' + esc(msg) + "</p>";
+    if (run.note) h += '<p class="bs-note">' + esc(run.note) + "</p>";
     // The question hides once a shot is earned: you got it right, and the grid is what matters now.
-    if (run.phase === "ask" || run.phase === "incoming") h += '<article class="card" id="run-card">' + runCardHTML() + "</article>";
+    if (run.phase === "ask" || run.phase === "incoming" || run.phase === "repaired") h += '<article class="card' + (run.repairing ? " repair" : "") + '" id="run-card">' + runCardHTML() + "</article>";
+    h += bsToolsHTML();
     h += bsBoardsHTML(false);
-    h += '<div class="exam-nav">' + (run.phase === "incoming" ? '<button type="button" class="btn" data-game="bs-continue">' + (bsOver(run.me) ? "See the result" : "Next question") + "</button>" : "") +
-      '<span class="meta" style="margin-left:0">' + (run.phase === "ask" ? "Keys 1–4 answer" : run.phase === "incoming" ? "Enter continues" : "") + "</span>" +
-      '<span class="spacer"></span><button type="button" class="btn ghost" data-game="bs-leave">Leave — it is saved</button>' +
+    const showing = run.phase === "incoming" && run.landed < run.volley.length, cont = run.phase === "incoming" || run.phase === "repaired";
+    h += '<div class="exam-nav">' + (cont ? '<button type="button" class="btn" data-game="bs-continue">' + (showing ? "Skip" : run.phase === "incoming" && bsOver(run.me) ? "See the result" : "Next question") + "</button>" : "") +
+      '<span class="meta" style="margin-left:0">' + (run.phase === "ask" ? "Keys 1–4 answer" : cont ? "Enter continues" : "") + "</span>" +
+      '<span class="spacer"></span><button type="button" class="btn ghost bs-sound" data-game="bs-sound" aria-pressed="' + fx.on() + '">Sound ' + (fx.on() ? "on" : "off") + "</button>" +
+      '<button type="button" class="btn ghost" data-game="bs-leave">Leave — it is saved</button>' +
       '<button type="button" class="btn ghost" data-game="bs-strike">Strike your colours</button></div>';
     return h + "</div>";
   }
+  // The battle report: accuracy against the pass mark, what moved, the groups their antennas stood
+  // for, what to drill — then the next battle.
   function battleEndHTML() {
-    const g = state.game, n = run.right + run.wrong;
+    const g = state.game, n = run.right + run.wrong, o = bsOpp(run.opp), r = bsVs(g, o.call), nx = bsOpp(bsNextOpp(g));
+    const pct = n ? Math.round(100 * run.right / n) : 0, PASS = 74, dp = passProb() - (run.startedP || 0);
     let h = '<div class="view"><div class="result-head"><span class="score">' + (run.won ? "Won" : "Lost") + "</span>" +
-      '<span class="lede">' + (run.won ? "Their antennas are all down." : "Your antennas are all down.") + " " + run.right + " right, " + run.wrong + " wrong" +
-      (n ? " (" + Math.round(100 * run.right / n) + "%)" : "") + " over " + n + " questions.</span></div>";
-    h += '<div class="run-end"><p class="rank-meta">+' + run.score.toLocaleString() + " points · battles won " + bsTotal(g.bw) + ", lost " + bsTotal(g.bl) + "</p>" +
-      '<p class="rank-meta">Chance of passing: ' + fmtPct(passProb()) + "</p></div>";
+      '<span class="lede">' + esc(run.won ? o.rank + " " + o.name + " (" + o.call + ") has no antennas standing" : "Your antennas are all down — " + o.call + " takes this one") +
+      (run.won && run.shots ? " after " + run.shots + " shots" : "") + ".</span></div>";
+    h += '<div class="bs-report">';
+    h += '<p class="bs-big ' + (pct >= PASS ? "ok" : "no") + '">You fought at ' + pct + "% — the exam needs " + PASS + "% (26 of 35).</p>";
+    h += '<p class="rank-meta">' + run.right + " right, " + run.wrong + " wrong over " + n + " questions · longest run " + (run.best || 0) +
+      (run.rr + run.rw ? " · repairs " + run.rr + " of " + (run.rr + run.rw) + " right" : "") +
+      (run.used && (run.used.sweep || run.used.salvo) ? " · used " + [run.used.sweep ? run.used.sweep + " sweep" + (run.used.sweep > 1 ? "s" : "") : "", run.used.salvo ? run.used.salvo + " salvo" + (run.used.salvo > 1 ? "s" : "") : ""].filter(Boolean).join(", ") : "") + "</p>";
+    h += '<p class="rank-meta">Chance of passing: ' + fmtPct(passProb()) + (Math.abs(dp) >= 0.001 ? " (" + (dp >= 0 ? "+" : "−") + fmtPct(Math.abs(dp)).replace("<", "") + " over this battle)" : "") + "</p>";
+    h += '<p class="rank-meta">+' + run.score.toLocaleString() + " points · against " + esc(o.call) + " " + r.w + "–" + r.l + " · all battles " + bsTotal(g.bw) + "–" + bsTotal(g.bl) +
+      " · ladder " + bsBeaten(g) + " of " + BS_OPPS.length + " beaten</p>";
+    if (run.cfg.daily) {
+      h += '<p class="rank-meta">' + esc(bsShareText(run.day, o.call, run.won ? run.shots : null, pct)) + "</p>";
+    }
+    h += "</div>";
+    const gs = run.en.ships.filter((x) => x.g);
+    if (gs.length) {
+      h += '<div><p class="eyebrow">Their antennas were your weakest groups — tap one to drill it</p><div class="bs-groups">' + gs.map((x) =>
+        '<button type="button" class="bs-group' + (x.hits === x.cells.length ? " sunk" : "") + '" data-group="' + esc(x.g) + '"><b>' + esc(x.g) + "</b> " + esc(GTITLE[x.g] || "") +
+        "<span>" + esc(x.name) + (x.hits === x.cells.length ? " · sunk" : " · still standing") + "</span></button>").join("") + "</div></div>";
+    }
     h += bsBoardsHTML(true);
     if (run.missed.length) {
       h += '<div><p class="eyebrow">Missed — these are back in your drill</p>' + run.missed.map((it) =>
         '<div class="miss"><p class="q"><span class="qid">' + it.id + "</span> " + esc(it.text) + '</p><p class="right">Answer: ' +
         (it.keys && it.keys.length ? markSpans(it.answers[it.c], it.keys, '<b class="key">', "</b>") : esc(it.answers[it.c])) + "</p></div>").join("") + "</div>";
     }
-    h += '<div class="exam-nav"><button type="button" class="btn" data-game="bs-new">New battle</button><button type="button" class="btn ghost" data-game="home">Back to the game</button></div>';
+    h += '<div class="exam-nav">' + (run.cfg.daily
+      ? '<button type="button" class="btn" data-game="bs-share">Share</button>'
+      : '<button type="button" class="btn" data-game="bs-new">' + (nx.call === o.call ? "Rematch " : "Next: ") + esc(nx.call) + "</button>") +
+      '<button type="button" class="btn ghost" data-game="home">Back to the game</button></div>';
     return h + "</div>";
   }
   const bandClass = (gp) => gp >= CONFIRMED_P ? "qsl" : gp >= WORKED_P ? "worked" : gp >= HEARD_P ? "heard" : "";
@@ -2051,10 +2595,19 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     h += '<div class="modes">';
     h += '<button type="button" class="mode daily' + (doneToday ? " done" : "") + '" data-game="daily"><span class="tag">' + esc(MODES.daily.tag) + "</span><b>" + esc(MODES.daily.name) + "</b><p>" + esc(MODES.daily.blurb) + "</p>" +
       '<span class="pb">' + (doneToday ? "Worked today — " + g.daily[today].toLocaleString() + " points. Play again for practice." : st ? "Not worked today — the streak is at " + st + "." : "Work it today to start a streak.") + "</span></button>";
-    {
-      const sv = bsLoad(P.pool), w = bsTotal(g.bw), l = bsTotal(g.bl);
-      h += '<button type="button" class="mode battle" data-game="broadside"><span class="tag">' + esc(MODES.broadside.tag) + "</span><b>" + esc(MODES.broadside.name) + "</b><p>" + esc(MODES.broadside.blurb) + "</p>" +
-        '<span class="pb">' + (sv ? "Battle in progress — theirs " + bsLeft(sv.en) + " standing, yours " + bsLeft(sv.me) + ". Tap to resume." : w + l ? "Won " + w + " · lost " + l : "No battles yet") + "</span></button>";
+    for (const bm of ["bsdaily", "broadside", "skirmish"]) {
+      const M = MODES[bm], sv = bsLoad(P.pool, M), w = bsTotal(g.bw), l = bsTotal(g.bl);
+      const nx = bsOpp(sv && BS_OPPS.some((o) => o.call === sv.opp) ? sv.opp : M.daily ? bsDailyOpp(today) : bsNextOpp(g));
+      let pb;
+      if (sv) pb = "In progress vs " + esc(nx.call) + (sv.phase === "place" ? " — placing your antennas" : " — theirs " + bsLeft(sv.en) + " standing, yours " + bsLeft(sv.me)) + ". Tap to resume.";
+      else if (M.daily && bsDailyDone(g, today)) {
+        const sh = bsDailyShots(g, today);
+        pb = (sh != null ? "Sank " + esc(nx.call) + " in " + sh + " shots today" : esc(nx.call) + " won today") + " — tap to share. A new board tomorrow.";
+      } else if (M.daily) pb = "Today: " + esc(nx.rank + " " + nx.name) + " (" + esc(nx.call) + ") — one counted try.";
+      else pb = "Next: " + esc(nx.rank + " " + nx.name) + " (" + esc(nx.call) + ")" + (w + l ? " · won " + w + ", lost " + l + " · ladder " + bsBeaten(g) + "/" + BS_OPPS.length : "");
+      const act = M.daily && !sv && bsDailyDone(g, today) ? "bs-share-day" : bm;
+      h += '<button type="button" class="mode battle' + (M.daily && !sv && bsDailyDone(g, today) ? " done" : "") + '" data-game="' + act + '"><span class="tag">' + esc(M.tag) + "</span><b>" + esc(M.name) + "</b><p>" + esc(M.blurb) + "</p>" +
+        '<span class="pb">' + pb + "</span></button>";
     }
     for (const m of ["sift", "pileup", "zero", "cue", "reverse"]) {
       const b = g.best[m];
@@ -2175,7 +2728,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     const ch = e.target.closest(".choice");
     if (ch && !ch.disabled) { answerGame(+ch.dataset.pos); return; }
     const cell = e.target.closest("[data-cell]");
-    if (cell) { battleFire(+cell.dataset.cell); return; }
+    if (cell) { battleTap(+cell.dataset.cell); return; }
     const gcell = e.target.closest("[data-group]");
     if (gcell) { $("#scope").value = gcell.dataset.group; drill = { item: null }; show("drill"); return; }
     const b = e.target.closest("[data-game]");
@@ -2183,9 +2736,14 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     const a = b.dataset.game;
     if (a === "home") { stopRun(); run = null; renderGame(); }
     else if (a === "quit" || a === "bs-leave") endRun();
-    else if (a === "broadside") startBattle(false);
-    else if (a === "bs-new") startBattle(true);
+    else if (a === "broadside" || a === "skirmish" || a === "bsdaily") startBattle(false, a);
+    else if (a.startsWith("bs-place-")) placeAction(a);
+    else if (a.startsWith("bs-tool-")) { if (run && run.phase === "aim") { run.tool = a.slice(8); run.note = ""; renderGame(); } }
+    else if (a === "bs-share" && run) bsShare(bsShareText(run.day, run.opp, run.won ? run.shots : null, run.right + run.wrong ? Math.round(100 * run.right / (run.right + run.wrong)) : null));
+    else if (a === "bs-share-day") { const t = dayKey(Date.now()); bsShare(bsShareText(t, bsDailyOpp(t), bsDailyShots(state.game, t), null)); }
+    else if (a === "bs-new") startBattle(true, run ? run.mode : "broadside");
     else if (a === "bs-continue") battleContinue();
+    else if (a === "bs-sound") { fx.toggle(); renderGame(); }
     else if (a === "bs-strike") { if (window.confirm("Strike your colours? This battle counts as a loss.")) finishBattle(false); }
     else startRun(a);
   });
@@ -2254,7 +2812,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         nextDrill(); e.preventDefault();
       }
     } else if (view === "game" && run && !run.done) {
-      if (run.cfg.battle && run.phase === "incoming" && (e.key === "Enter" || e.key === " ")) { battleContinue(); e.preventDefault(); }
+      if (run.cfg.battle && (run.phase === "incoming" || run.phase === "repaired") && (e.key === "Enter" || e.key === " ")) { battleContinue(); e.preventDefault(); }
       else if (!run.answered && /^[1-4]$/.test(e.key)) { answerGame(+e.key - 1); e.preventDefault(); }
     } else if (view === "exam" && exam && !exam.done) {
       // ⚠ A real session lets you click the answer OR type its letter, so accept both here.
