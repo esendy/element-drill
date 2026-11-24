@@ -673,7 +673,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // conflate two unrelated streaks. One entry per day, `{s: score, n: outOf}`, merged by the same
   // larger-value-per-key rule as every other day map, and the streak is DERIVED from which keys
   // exist — never stored.
-  const blank = (pid = P.pool) => ({ v: 2, pool: pid, updated: 0, cards: {}, stmt: {}, exams: [], exd: {}, game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true, exam: "2027-01-07" } });
+  const blank = (pid = P.pool) => ({ v: 2, pool: pid, updated: 0, cards: {}, stmt: {}, exams: [], exd: {}, exq: {}, exc: {}, game: blankGame(), prefs: { rate: 1, sayId: false, order: "weak", auto: true, exam: "2027-01-07" } });
   // Day-keyed exam results, junk-proofed the same way normGame() does its maps.
   function normExd(x) {
     const o = {};
@@ -685,6 +685,13 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         if (Number.isFinite(s) && Number.isFinite(n) && n > 0) o[k] = { s: Math.max(0, s), n };
       }
     }
+    return o;
+  }
+  // Time maps (`exq`, `exc`): key -> epoch ms. Junk-proofed like normExd: a non-finite or
+  // non-positive value is dropped rather than trusted.
+  function normTimes(x) {
+    const o = {};
+    if (x && typeof x === "object") for (const k of Object.keys(x)) { const v = Number(x[k]); if (Number.isFinite(v) && v > 0) o[k] = v; }
     return o;
   }
   function normalize(s, pid = P.pool) {
@@ -704,6 +711,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       cards: s.cards && typeof s.cards === "object" ? s.cards : {},
       exams: Array.isArray(s.exams) ? s.exams.slice(-20) : [],
       exd: normExd(s.exd),
+      exq: normTimes(s.exq),
+      exc: normTimes(s.exc),
       stmt: s.stmt && typeof s.stmt === "object" ? s.stmt : {},
       game: normGame(s.game),
       prefs: { ...b.prefs, ...(s.prefs || {}) },
@@ -958,8 +967,16 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
         if (!exd[k] || src[k].s > exd[k].s) exd[k] = src[k];
       }
     }
+    // The exam rotation: when each question was last served (`exq`) and when each group's round
+    // began (`exc`). Larger time per key wins, so both devices share one rotation, in either order.
+    const maxTimes = (x, y) => {
+      const o = {};
+      for (const src of [normTimes(x), normTimes(y)]) for (const k of Object.keys(src)) { if (src[k] < resetAt) continue; o[k] = Math.max(o[k] || 0, src[k]); }
+      return o;
+    };
+    const exq = maxTimes(a.exq, b.exq), exc = maxTimes(a.exc, b.exc);
     const newer = (a.updated || 0) >= (b.updated || 0) ? a : b;
-    return { ...newer, cards, stmt, exd, exams: [...ex.values()].sort((x, y) => x.t - y.t).slice(-20), game: mergeGame(a.game, b.game, resetAt), resetAt, updated: Math.max(a.updated || 0, b.updated || 0) };
+    return { ...newer, cards, stmt, exd, exq, exc, exams: [...ex.values()].sort((x, y) => x.t - y.t).slice(-20), game: mergeGame(a.game, b.game, resetAt), resetAt, updated: Math.max(a.updated || 0, b.updated || 0) };
   }
   // ⚠ Game state must merge COMMUTATIVELY, or two devices undo each other: every map takes the larger
   // value per key, which gives the same answer whichever way round it runs and however many times.
@@ -986,7 +1003,7 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
     return [["xpd", G.xpd], ["runs", G.runs], ["daily", G.daily], ["bw", G.bw], ["bl", G.bl], ["bwo", G.bwo], ["blo", G.blo], ["bdw", G.bdw], ["bdl", G.bdl]].map(([n, m]) => [n, Object.keys(m).sort().map((k) => [k, m[k]])])
       .concat([["best", Object.keys(G.best).sort().map((k) => [k, G.best[k].s, G.best[k].d])]]);
   };
-  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].s]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), Object.keys(s.exd || {}).sort().map((k) => [k, s.exd[k].s, s.exd[k].n]), s.resetAt || 0, s.prefs, canonGame(s.game)]);
+  const canon = (s) => JSON.stringify([Object.keys(s.cards).sort().map((k) => [k, s.cards[k].l || 0, s.cards[k].s]), Object.keys(s.stmt || {}).sort().map((k) => [k, s.stmt[k].l || 0, s.stmt[k].b]), (s.exams || []).map((x) => x.t), Object.keys(s.exd || {}).sort().map((k) => [k, s.exd[k].s, s.exd[k].n]), [s.exq || {}, s.exc || {}].map((m) => Object.keys(m).sort().map((k) => [k, m[k]])), s.resetAt || 0, s.prefs, canonGame(s.game)]);
   // ⚠ GitHub answers 404, not 403, when a token lacks a permission — found 2026-09-14 when the first
   //   real sync said only "GitHub answered 404". Fine-grained tokens cannot use gists at all (GitHub
   //   docs), and GitHub's default "Generate new token" makes a fine-grained one.
@@ -1418,8 +1435,30 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       esc(exam.calcExpr || "") + '"><span class="calc-out" id="calc-out">' + (out === "" ? "" : "= " + out) + "</span>" +
       '<span class="calc-note">+ − × ÷ ^ and brackets. Typing here never changes your answer.</span></div>';
   }
+  // ⚠⚠ EXAM ROTATION (operator, 2026-11-23: "if you take the exam twice you see many of the same
+  // questions again"). One question per group is the real exam's structure and stays. Drawn with no
+  // memory, it repeated ~3 of 35 questions against the previous exam and ~6 against the two before
+  // (groups hold 8-15 questions). Each group is now a bag: a question is not drawn again until the
+  // rest of its group has been, and then the group starts a new round, which skips the one just
+  // seen. `exq[id]` = when a question was last served, `exc[group]` = when its round began.
+  // A question counts as served at the START of an exam: you have seen it whether or not you grade.
+  function examPickGroup(gid, items, exq, exc, now, rnd) {
+    const served = (it) => (exq[it.id] || 0) > 0 && exq[it.id] >= (exc[gid] || 0);
+    let pool = items.filter((it) => !served(it));
+    if (!pool.length) {
+      exc[gid] = now;
+      const last = Math.max(...items.map((it) => exq[it.id] || 0));
+      pool = items.length > 1 ? items.filter((it) => (exq[it.id] || 0) < last) : items;
+      if (!pool.length) pool = items;
+    }
+    const it = pool[Math.floor(rnd() * pool.length)];
+    exq[it.id] = now;
+    return it;
+  }
   function startExam() {
-    const items = GROUPS.map((g) => { const a = byGroup.get(g.id); return a[Math.floor(Math.random() * a.length)]; });
+    const now = Date.now(), exq = state.exq || (state.exq = {}), exc = state.exc || (state.exc = {});
+    const items = GROUPS.map((g) => examPickGroup(g.id, byGroup.get(g.id), exq, exc, now, Math.random));
+    touch();
     exam = { items, orders: items.map(() => shuffle([0, 1, 2, 3])), answers: items.map(() => null), pos: 0, done: false,
              review: false, calc: false, calcExpr: "" };
     renderExam();
