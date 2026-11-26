@@ -565,7 +565,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // ⚠ INTERVALS/KNOW/MAXB above now serve ONLY the Sift statement drill, which stays on the simple
   // box ladder: it is a coarse recognition check, not the exam-critical path, and giving it a second
   // scheduler would double the test surface for no gain. QUESTION cards use FSRS-6, below.
-  const EXAM_FRACTION = 0.25;  // no interval may exceed this share of the time left before the exam
+  // ⚠ 0.25 → 0.15 (operator, 2026-11-26): well-known questions came back only every ~11 days, too rarely.
+  const EXAM_FRACTION = 0.15;  // no interval may exceed this share of the time left before the exam
   const LEECH_W = 6;           // wrong this many times = fighting you; surfaced, never suspended
 
   // ---------- FSRS-6 ----------
@@ -706,24 +707,25 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
       return { ...b, v: 2, resetAt: Math.max(s.updated || 0, s.resetAt || 0),
                prefs: { ...b.prefs, ...(s.prefs || {}) } };
     }
+    const prefs = { ...b.prefs, ...(s.prefs || {}) };
     return {
       ...b, ...s,
-      cards: s.cards && typeof s.cards === "object" ? s.cards : {},
+      cards: recapDue(s.cards && typeof s.cards === "object" ? s.cards : {}, examTs(prefs)),
       exams: Array.isArray(s.exams) ? s.exams.slice(-20) : [],
       exd: normExd(s.exd),
       exq: normTimes(s.exq),
       exc: normTimes(s.exc),
       stmt: s.stmt && typeof s.stmt === "object" ? s.stmt : {},
       game: normGame(s.game),
-      prefs: { ...b.prefs, ...(s.prefs || {}) },
+      prefs,
     };
   }
   function loadLocal() { try { return JSON.parse(localStorage.getItem(lsKey(P.pool))); } catch (e) { return null; } }
   function saveLocal() { try { localStorage.setItem(lsKey(P.pool), JSON.stringify(state)); } catch (e) { /* private mode */ } }
 
   // The exam date, as an epoch ms, or 0 when none is set. Stored per pool in prefs.
-  function examTs() {
-    const s = state.prefs && state.prefs.exam;
+  function examTs(prefs = state.prefs) {
+    const s = prefs && prefs.exam;
     if (!s) return 0;
     const t = Date.parse(s + "T23:59:59");
     return Number.isFinite(t) ? t : 0;
@@ -735,10 +737,22 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   // reviews as the date nears, which is the cram a fixed deadline actually wants. The literature on
   // optimal gaps (Cepeda, Pashler) puts best spacing near 10–20% of the retention interval; 25% is
   // deliberately a little generous, erring toward fewer reviews.
-  function capToExam(ms, now) {
-    const t = examTs();
+  function capToExam(ms, now, t = examTs()) {
     if (!t || t <= now) return ms;
     return Math.min(ms, Math.max(864e5, (t - now) * EXAM_FRACTION));
+  }
+  // ⚠ RE-CAP ON LOAD AND ON A DATE CHANGE (2026-11-26). The ceiling used to apply only when a card
+  // was answered, so moving the exam date earlier, or lowering EXAM_FRACTION, left every card
+  // already scheduled at its old, longer due date. This recomputes each card's due date exactly as
+  // record() did at its last answer (now = c.l), under the CURRENT date, and keeps the earlier of
+  // the two, so it never pushes a card later. Pure in (card, exam date): normalize may call it.
+  function recapDue(cards, t) {
+    if (!t) return cards;
+    for (const c of Object.values(cards)) {
+      if (!c || c.s === undefined || !c.l || !Number.isFinite(c.d)) continue;
+      c.d = Math.min(c.d, c.l + capToExam(fsrsInterval(c.s) * 864e5, c.l, t));
+    }
+    return cards;
   }
   // A card is { s: stability(days), f: difficulty, d: due(ms), n, r, w, l }. ⚠ `d` stays DUE, as in
   // v1, so the merge rules and the CLI need no translation; difficulty is `f` to avoid colliding.
@@ -1766,6 +1780,8 @@ const FIGS = {"t-1.png":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAAJYC
   });
   function setExam(v) {
     state.prefs.exam = v;
+    recapDue(state.cards, examTs());
+    drill = { item: null };   // a card the new date made due should be next, not after this one
     touch(); applyPrefs(); updateReadout(); renderProgress();
   }
   $("#progress-body").addEventListener("click", (e) => {
